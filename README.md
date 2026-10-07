@@ -1,123 +1,62 @@
-# Bluetooth Mesh for Home Assistant
+# Bluetooth Mesh to MQTT — Home Assistant add-on
 
-This project aims to integrate Bluetooth Mesh devices into Home Assistant directly.
+[![CI](https://github.com/nitrokart/homeassistant-blemesh2mqtt/actions/workflows/ci.yml/badge.svg)](https://github.com/nitrokart/homeassistant-blemesh2mqtt/actions/workflows/ci.yml)
+[![Add repository to my Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fnitrokart%2Fhomeassistant-blemesh2mqtt)
 
-The project is in a development state. The current approach is to use the Home Assistant MQTT integration on the Home Assistant side. Then for every Bluetooth Mesh device type a _bridge_ class is implemented, that maps the node's functionality to a Home Assistant device class.
+Pair Bluetooth Mesh lights (tested with a Ledvance E27 bulb) from a web UI and control them in Home Assistant through MQTT discovery. No cloud, no phone app.
 
-## Poject State
+Fork of [dominikberse/homeassistant-bluetooth-mesh](https://github.com/dominikberse/homeassistant-bluetooth-mesh), with fixes for Raspberry Pi onboard Bluetooth, a new UI, and packaging.
 
-The basic requirements for this setup are already implemented:
+## Requirements
 
-- MQTT integration using `asyncio_mqtt`
-- Bluetooth Mesh integration using `bluetooth_mesh`
-- Mechanisms to allow easy communication between both ends
+- Home Assistant OS or Supervised (add-ons are required).
+- An MQTT broker (e.g. the Mosquitto add-on).
+- A Bluetooth adapter the add-on can use exclusively. A USB dongle is the safest choice. The Raspberry Pi 4 onboard chip works with `io: generic` (see below).
 
-Additionally a command line interface for easy scanning and provisioning is available.
+## Install
 
-### Devices
+1. Click the badge above, or go to **Settings → Add-ons → Add-on Store → ⋮ → Repositories** and add:
+   `https://github.com/nitrokart/homeassistant-blemesh2mqtt`
+2. Install **Bluetooth Mesh to MQTT**. The image is built on your device the first time (10–20 minutes on a Pi).
+3. On a Raspberry Pi 4 set the option `io` to `generic`. Start the add-on.
+4. Open **BLE Mesh** in the sidebar, put the bulb in pairing mode, scan, and provision it.
 
-Currently the following bridges are implemented:
+Alternative: copy the `blemesh2mqtt/` folder to the `/addons` share and install it under *Local add-ons*.
 
-- _Generic Light Bridge_: Maps a basic Bluetooth Mesh light to a Home Assistant Light. Supports on / off, brightness and color temperature. Since I do not have Bluetooth Mesh RGB Leds at hand, I do not plan on supporting them. The implementation should basically follow the color temperature though.
+## Usage
 
-### Roadmap
+Full guide: [blemesh2mqtt/DOCS.md](blemesh2mqtt/DOCS.md). Changes: [CHANGELOG](blemesh2mqtt/CHANGELOG.md).
 
-- Check relay setup
-- (done) Dockerize application
-- Provide as HACS integration
-- Extend README
+- Pairing data is stored in `/data` and survives updates.
+- Each paired light shows up as an MQTT device (`light.<name>`). Home Assistant does not add it to dashboards automatically.
+- Devices paired as `generic` have no on/off; change the type to `light` in the UI.
+- Turn on **relay** only for mains-powered devices; it extends the mesh range.
+- The UI does not show live on/off state (not read back from the device).
 
-## (Hopefully) easy setup
+## Options
 
-The repository provides a docker container, that will setup BlueZ with mesh support and run the gateway. However, due to the use of the bluetooth hardware, I can not guarantee that it is working everywhere. For now I tested it on a Raspberry Pi 4 with Raspberry Pi OS 2022-09-22 (bullseye). If you are able to run it on other hardware just notify me as I will try to keep track of compatible setups.
+| Option | Default | Description |
+|---|---|---|
+| `adapter` | `0` | HCI index (`hciN`) used by `bluetooth-meshd` |
+| `io` | `auto` | `auto`, `generic` (raw HCI) or `mgmt` |
+| `log_level` | `info` | `debug`, `info`, `warning`, `error` |
 
-- If you have a blank Raspberry Pi you need to install docker and git first.
+When adding options in development, bump `version` in `config.yaml` so Home Assistant refreshes them.
 
-- Clone the repository and create a `config.yaml` file under `docker/config/`:
+## Troubleshooting
 
-```
-mqtt:
-  broker: <mqtt_broker>
-  [username: <username>]
-  [password: <password>]
-  node_id: mqtt_mesh
-mesh:
-  <hass_device_id>:
-    uuid: <bluetooth_mesh_device_uuid>
-    name: <hass_device_name>
-    type: light             # thats it for now
-    [relay: <true|false>]   # whether this node should act as relay
-  ...
-```
+- **`Unexpected non-whitespace character after JSON` in the UI**: ingress returned `502` because the add-on was restarting. Wait for `Web UI listening on port 8099` in the log and reload.
+- **Raspberry Pi 4**: use `io: generic`. With `auto` the controller rejects `LE Set Random Address` and provisioning packets are never sent. The image builds BlueZ 5.87 `bluetooth-meshd` and patches it so the Remote Provisioning client model exists after Attach.
+- **`bad-pdu` while provisioning**: the bulb didn't answer within ~60 s. Start provisioning while the bulb is in pairing mode, disable the HA Bluetooth integration if it shares the adapter, and try `io: generic`.
+- **Device cannot be switched**: it is `generic`; change its type to `light`.
+- **Debug logs**: set `log_level: debug` and follow with `ha apps logs local_blemesh2mqtt -f`.
 
-- **It is very important to disable bluetooth on the host system!** This is neccessary, because the bluetooth-mesh service needs exclusive access to the bluetooth device.
+## Development
 
-```
-sudo systemctl stop bluetooth
-sudo systemctl disable bluetooth
-```
+- CI (`.github/workflows/ci.yml`): black, compile check, shellcheck, yamllint, UI script syntax, add-on linter, Docker build for amd64 and aarch64.
+- Release: bump `version` in `blemesh2mqtt/config.yaml`, add a `## <version>` entry to the CHANGELOG, then push tag `vX.Y.Z`. The release workflow checks the tag matches and publishes the notes.
+- Run without HA: set `ALLOWED_IPS`, then `python3 gateway.py --basedir <dir>` in `blemesh2mqtt/gateway` (needs `bluetooth-meshd` and a system D-Bus).
 
-- Start the container using docker compose and grab a coffee. This took one and a half hours for me to complete on a Raspberry Pi 4. It might seem stuck when compiling numpy, but this actually takes half an hour.
+## License
 
-```
-docker compose build
-docker compose up -d
-```
-
-Note that the container currently runs `/bin/bash` in the foreground, because the gateway exits if no nodes are provisioned. This will change in the future (I plan on implementing a simple web interface for provisioning). Also, there might be an error message on the very first startup. It should be gone on the second try.
-
-### Using the command line within docker
-
-Since the web interface is not yet available, you need to use the command line to scan and provision devices. With the container running, you can access the command line inside the docker container from the host system using:
-
-```
-docker compose exec app /bin/bash
-```
-
-From there, it might be neccessary to stop the running python process.
-
-```
-ps -ef | grep gateway
-kill <PID>
-```
-
-I placed the configuration files in `/config`, so you need to add `--basedir /config` to every command. So for example the scan command would look like this:
-
-```
-python3 gateway.py --basedir /config scan
-```
-
-Once you are done, switch back to the host system (simply `exit`) and restart the container for the changes to take effect.
-
-```
-docker compose restart
-```
-
-## Manual setup
-
-If you do not want to use the docker image or for some reason it is not compatible, you can try to setup everything manually. However, this can be a little tricky.
-
-After cloning the repository, the easy part is to install the Python requirements using `pip3 install -r requirements.txt` (probably inside a virtual environment). The hard part is the get the `bluetooth-mesh` service running. This usually requires to build BlueZ from scratch and replace the available BlueZ installation. Have a look at the docker installation scripts, they should be a good starting point on what you need to do.
-
-Once you get it running, it might be neccessary to stop the default `bluetooth` service first and ensure that your bluetooth device (probably `hci0`) is not locked. Place the configuration file (see docker installation) inside the main folder and name it `config.yaml`.
-
-With that available, you should be able to run the application from the `gateway` folder (try `python3 gateway.py scan` first).
-
-### Running the gateway
-
-Calling `python3 gateway.py` without further arguments will start the MQTT gateway and keep it alive. All provisioned devices should be discovered by Home Assistant and become available. If not, check the Home Assistant MQTT integration. If no devices are provisioned, the application will exit.
-
-## Provisioning a device
-
-**Make sure you know how to reset your device in case something goes wrong here.** Also it might be neccessary to edit the `store.yaml` by hand in case something fails.
-
-_Remember that you need to add the `--basedir /config` switch after `gateway.py` if you are using the command line within docker._
-
-1. Scan for unprovisioned devices with `python3 gateway.py scan`.
-1. Create an entry for the device(s) you want to add in the `config.yaml`.
-1. Provision the device with `python3 gateway.py prov --uuid <uuid> add`.
-1. Configure the device with `python3 gateway.py prov --uuid <uuid> config`.
-   _Do not skip this step, otherwise the device is not part of the application network and it will not respond properly._
-
-- To list all provisioned devices use `python3 gateway.py prov list`.
-- You can remove and reset a device with `python3 gateway.py prov --uuid <uuid> reset`.
+No license file yet. The upstream project does not declare one; pick and add a license before wider reuse.

@@ -1,0 +1,10 @@
+configuration:
+  adapter:
+    name: Bluetooth adapter index
+    description: Number N of the adapter hciN used by the mesh daemon (see /sys/class/bluetooth). It needs exclusive access, so a dedicated USB dongle is safest. Use 0 for the Raspberry Pi onboard chip.
+  io:
+    name: Mesh I/O backend
+    description: auto (default), generic (raw HCI) or mgmt (kernel management interface). Raspberry Pi onboard Bluetooth needs generic.
+  log_level:
+    name: Log level
+    description: Use debug when reporting a problem. It also enables the BlueZ mesh and btmon traces.

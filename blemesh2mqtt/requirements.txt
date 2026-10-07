@@ -1,0 +1,5 @@
+aiohttp>=3.9
+asyncio-mqtt==0.12.1
+paho-mqtt<2
+PyYAML>=6
+git+https://github.com/dominikberse/python-bluetooth-mesh@bac0c43553b23a8e68897a8d36a6f06c8cade684

@@ -1,7 +1,7 @@
 .venv/
 __pycache__/
 
-# configuration files
-config.yaml
-store.yaml
-store.bak.yaml
+# local runtime files of the gateway (not the add-on manifest)
+blemesh2mqtt/gateway/config.yaml
+blemesh2mqtt/gateway/store.yaml
+blemesh2mqtt/gateway/store.bak.yaml

@@ -1,0 +1,48 @@
+name: Bug report
+description: Something does not work (pairing, control, MQTT, UI)
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please read the Troubleshooting section of the README first. Remove passwords and MQTT credentials from anything you paste.
+  - type: input
+    id: version
+    attributes:
+      label: Add-on version
+      placeholder: "0.1.16"
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Host hardware and Home Assistant OS version
+      placeholder: "Raspberry Pi 4, HAOS 18.3"
+    validations:
+      required: true
+  - type: input
+    id: bluetooth
+    attributes:
+      label: Bluetooth adapter and add-on options (adapter, io, log_level)
+      placeholder: "Onboard chip, adapter 0, io generic"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Mesh device (brand and model)
+      placeholder: "Ledvance Smart+ BT E27"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Add-on log
+      description: Set `log_level` to `debug`, reproduce the problem and paste the relevant part of the Gateway log.
+      render: text
