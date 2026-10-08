@@ -9,7 +9,7 @@ Pair compatible Bluetooth Mesh lights with Home Assistant. This add-on provision
 1. Add `https://github.com/nitrokart/homeassistant-blemesh2mqtt` in **Settings → Add-ons → Add-on Store → ⋮ → Repositories**.
 2. Install **Bluetooth Mesh to MQTT**. On Raspberry Pi 4 using onboard Bluetooth, set `io` to `generic`.
 3. Start the add-on and open **BLE Mesh** from the sidebar.
-4. Factory-reset a compatible light, put it in Bluetooth Mesh pairing mode, scan, and provision it.
+4. Factory-reset a compatible light, open the **Add Device** tab, scan, and provision it.
 5. After MQTT connects, add the discovered `light.<name>` entity to a dashboard from Home Assistant.
 
 The first installation builds BlueZ and can take 10–20 minutes on a Raspberry Pi. The Bluetooth adapter must not also be used by Home Assistant's Bluetooth integration.

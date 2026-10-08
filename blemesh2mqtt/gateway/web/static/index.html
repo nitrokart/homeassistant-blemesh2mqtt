@@ -1566,6 +1566,16 @@ let nodeTypesLoaded = false;
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 async function api(method, path, body) {
   const res = await fetch(path, {
     method,
@@ -1747,6 +1757,12 @@ function renderDevices(state) {
     const rttFormatted = rttVal !== null ? `${rttVal} ms` : "Not measured";
     const hopsFormatted = hopsVal !== null ? (hopsVal === 1 ? "1 Hop (Direct)" : `${hopsVal} Hops`) : "Unknown";
 
+    const safeName = escapeHtml(node.name || node.id || 'Unnamed Device');
+    const safeTitle = escapeHtml(node.name || node.id || 'Unnamed');
+    const safeRawName = escapeHtml(node.name || node.id || '');
+    const safeId = escapeHtml(node.id || '');
+    const safeUuid = escapeHtml(node.uuid);
+
     card.innerHTML = `
       <div class="device-card-glow"></div>
       <div class="device-card-head">
@@ -1757,8 +1773,8 @@ function renderDevices(state) {
           <div class="device-meta">
             ${!isRenaming ? `
               <div class="device-name-row">
-                <span class="device-title" title="${node.name || node.id || 'Unnamed'}">${node.name || node.id || 'Unnamed Device'}</span>
-                <button class="btn btn-sm btn-icon-only btn-subtle" title="Rename device" onclick="startRename('${node.uuid}', '${node.name || node.id || ''}')">
+                <span class="device-title" title="${safeTitle}">${safeName}</span>
+                <button class="btn btn-sm btn-icon-only btn-subtle" title="Rename device" onclick="startRename('${safeUuid}', '${safeRawName.replace(/'/g, "\\'")}')">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -1767,14 +1783,14 @@ function renderDevices(state) {
               </div>
             ` : `
               <div class="rename-box">
-                <input class="rename-input" id="rename-input-${node.uuid}" value="${renamingNodes.get(node.uuid)}" maxlength="80">
-                <button class="btn btn-sm btn-primary" onclick="saveRename('${node.uuid}')">Save</button>
-                <button class="btn btn-sm btn-subtle" onclick="cancelRename('${node.uuid}')">Cancel</button>
+                <input class="rename-input" id="rename-input-${safeUuid}" value="${escapeHtml(renamingNodes.get(node.uuid))}" maxlength="80">
+                <button class="btn btn-sm btn-primary" onclick="saveRename('${safeUuid}')">Save</button>
+                <button class="btn btn-sm btn-subtle" onclick="cancelRename('${safeUuid}')">Cancel</button>
               </div>
             `}
             <div class="device-tags">
               <span class="tag ${node.ready ? 'ready' : ''}">${node.ready ? 'Online' : (node.configured ? 'Starting' : 'Configuring')}</span>
-              <span class="tag">Addr ${node.unicast}</span>
+              <span class="tag">Addr ${escapeHtml(node.unicast)}</span>
               ${node.relay ? '<span class="tag relay">Relay Active</span>' : ''}
             </div>
           </div>
@@ -2050,11 +2066,11 @@ function renderTopology(state) {
 
     // Node body
     svgHtml += `
-      <g style="cursor:pointer;" onclick="focusDevice('${node.uuid}')">
+      <g style="cursor:pointer;" onclick="focusDevice('${escapeHtml(node.uuid)}')">
         <circle cx="${nx}" cy="${ny}" r="16" fill="${isOn ? '#fef08a' : 'var(--bg-card)'}" stroke="${isOn ? '#ca8a04' : 'var(--border-subtle)'}" stroke-width="2" filter="${isOn ? 'url(#glow)' : 'none'}" />
         <text x="${nx}" y="${ny + 4.5}" text-anchor="middle" font-size="12">${node.type === 'light' ? '💡' : '🎛️'}</text>
-        <text x="${nx}" y="${ny + 30}" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--text-primary)">${node.name || node.id || 'Node'}</text>
-        <text x="${nx}" y="${ny + 42}" text-anchor="middle" font-size="10" font-family="var(--font-mono)" fill="var(--text-muted)">Addr ${node.unicast}</text>
+        <text x="${nx}" y="${ny + 30}" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--text-primary)">${escapeHtml(node.name || node.id || 'Node')}</text>
+        <text x="${nx}" y="${ny + 42}" text-anchor="middle" font-size="10" font-family="var(--font-mono)" fill="var(--text-muted)">Addr ${escapeHtml(node.unicast)}</text>
       </g>
     `;
   });

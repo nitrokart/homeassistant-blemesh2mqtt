@@ -5,7 +5,7 @@ name: Publish images
 # so users get the update in seconds instead of compiling BlueZ locally.
 on:
   push:
-    branches: [main]
+    branches: [main, master]
     paths: ["blemesh2mqtt/**"]
   workflow_dispatch:
 

@@ -498,7 +498,7 @@ class MqttGateway(Application):
                 # set overall application key
                 await self.add_app_key(*self.app_keys[0])
             except:
-                logging.exception(f"Failed to set app key {self._app_keys[0][2].bytes.hex()}")
+                logging.exception(f"Failed to set app key (index {self._app_keys[0][0]})")
 
                 # try to re-add application key
                 await self.delete_app_key(self.app_keys[0][0], self.app_keys[0][1])

@@ -31,16 +31,17 @@ Alternatively, copy the `blemesh2mqtt/` directory to Home Assistant's `/addons` 
 | `io` | `auto` | Mesh I/O backend: `auto`, `generic` (raw HCI), or `mgmt`. Use `generic` for Raspberry Pi 4 onboard Bluetooth. |
 | `log_level` | `info` | Log verbosity. `debug` also enables detailed BlueZ mesh and Bluetooth traces. |
 
-MQTT host, port, and credentials are taken from the Mosquitto add-on. They can be changed in **MQTT connection** in the BLE Mesh panel.
+MQTT host, port, and credentials are automatically populated from the Mosquitto add-on (or supervisor environment). They can also be viewed and updated in the **Settings** tab in the BLE Mesh panel.
 
 ## Pair a light
 
-1. Factory-reset the light and put it into Bluetooth Mesh pairing/provisioning mode. The reset and pairing sequence varies; follow the manufacturer's instructions.
-2. Keep the light powered and near the Bluetooth adapter.
-3. In the **BLE Mesh** panel, select **Scan for devices** and wait for scanning to finish.
-4. Select the discovered device, give it a name, choose the **light** device type, and select **Provision device**.
-5. Keep the light powered and in pairing mode while provisioning completes. This can take a few minutes. A successfully provisioned device is shown as **Ready**.
-6. Once MQTT is connected, Home Assistant discovers the device and a `light.<name>` entity. Add the entity to a dashboard from Home Assistant.
+1. Factory-reset the light and put it into Bluetooth Mesh pairing/provisioning mode. For most smart bulbs: switch off and on 3 to 5 times until the bulb blinks rapidly.
+2. Keep the light powered and within 2–3 metres of the Bluetooth adapter during pairing.
+3. In the **BLE Mesh** panel, switch to the **Add Device** tab and select **Start Discovery Scan (10s)**.
+4. When the device appears in the discovered list (showing its UUID and live RSSI signal strength), select **Configure & Pair**.
+5. Give the device a friendly name, select the **light** device type, choose whether to enable **Mesh Relay** (recommended for mains-powered lights), and click **Provision into Mesh**.
+6. Keep the light powered and in pairing mode while provisioning completes. Once finished, the device appears in the **Devices** tab as **Online**.
+7. Once MQTT is connected, Home Assistant automatically discovers the device and a `light.<name>` entity. Add the entity to your dashboards from Home Assistant.
 
 Only one device can be provisioned at a time. If a discovered node is not a compatible light, selecting the **light** type will not make it compatible.
 

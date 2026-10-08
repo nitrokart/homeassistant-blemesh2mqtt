@@ -8,3 +8,8 @@ updates:
     directory: /blemesh2mqtt
     schedule:
       interval: monthly
+  - package-ecosystem: pip
+    directory: /blemesh2mqtt
+    schedule:
+      interval: monthly
+

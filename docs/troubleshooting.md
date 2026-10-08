@@ -23,8 +23,8 @@ Set the add-on option `io` to `generic`. Ensure the Home Assistant Bluetooth int
 ## Light is missing from Home Assistant
 
 - Check that the MQTT broker is running and the Home Assistant MQTT integration is configured.
-- Check **MQTT connection** in the BLE Mesh panel.
-- A device configured as `generic` is not exposed as a controllable light. Set the type to **light** only if it is a compatible Bluetooth Mesh light.
+- Check the **Settings** tab in the BLE Mesh panel to ensure the MQTT broker shows as **Connected**.
+- A device configured as `generic` is not exposed as a controllable light. In the **Devices** tab, expand **Tech Specs** and change the type to **light** only if it is a compatible Bluetooth Mesh light.
 
 ## Controls are missing
 
