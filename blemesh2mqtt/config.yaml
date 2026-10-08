@@ -1,7 +1,6 @@
 name: Bluetooth Mesh to MQTT
-version: 0.1.29
+version: 0.1.30
 slug: blemesh2mqtt
-# Trigger GHCR package build with GHCR_TOKEN
 image: ghcr.io/nitrokart/{arch}-blemesh2mqtt
 description: Bridge Bluetooth Mesh lights (e.g. Ledvance) to Home Assistant via MQTT
 arch:

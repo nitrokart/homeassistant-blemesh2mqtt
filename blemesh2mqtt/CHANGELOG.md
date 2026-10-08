@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.30
+- UI optimization: debounce brightness and color-temperature slider inputs (250ms) to avoid queue saturation during rapid dragging.
+
 ## 0.1.29
 - Add-on manifest cleanup: remove deprecated `ingress_port` and obsolete `map` per Home Assistant add-on schema rules.
 - Shell script quality: fix SC2155 variable declaration and SC2164 directory change handling in `run.sh`.

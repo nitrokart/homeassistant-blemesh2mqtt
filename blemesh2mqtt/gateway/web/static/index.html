@@ -1815,7 +1815,7 @@ function renderDevices(state) {
               <input type="range" class="custom-slider" min="1" max="100" value="${node.brightness || 100}"
                 ${running ? 'disabled' : ''}
                 oninput="$('#val-b-${node.uuid}').textContent = this.value + '%'"
-                onchange="setBrightness('${node.uuid}', this.value)">
+                onchange="debouncedSetBrightness('${node.uuid}', this.value)">
             </div>
           </div>
         ` : ''}
@@ -1830,7 +1830,7 @@ function renderDevices(state) {
               <input type="range" class="custom-slider slider-temp" min="50" max="1250" value="${node.color_temp || 250}"
                 ${running ? 'disabled' : ''}
                 oninput="$('#val-t-${node.uuid}').textContent = Math.round(1000000 / this.value) + ' K'"
-                onchange="setColorTemp('${node.uuid}', this.value)">
+                onchange="debouncedSetColorTemp('${node.uuid}', this.value)">
             </div>
           </div>
         ` : ''}
@@ -1959,6 +1959,22 @@ async function setBrightness(uuid, brightness) {
 
 async function setColorTemp(uuid, mireds) {
   await runAction(() => api("POST", `api/nodes/${uuid}/color-temperature`, { mireds: Number(mireds) }));
+}
+
+let debounceBrightnessTimers = new Map();
+function debouncedSetBrightness(uuid, brightness) {
+  if (debounceBrightnessTimers.has(uuid)) clearTimeout(debounceBrightnessTimers.get(uuid));
+  debounceBrightnessTimers.set(uuid, setTimeout(() => {
+    setBrightness(uuid, brightness);
+  }, 250));
+}
+
+let debounceTempTimers = new Map();
+function debouncedSetColorTemp(uuid, mireds) {
+  if (debounceTempTimers.has(uuid)) clearTimeout(debounceTempTimers.get(uuid));
+  debounceTempTimers.set(uuid, setTimeout(() => {
+    setColorTemp(uuid, mireds);
+  }, 250));
 }
 
 async function setRelay(uuid, relay) {

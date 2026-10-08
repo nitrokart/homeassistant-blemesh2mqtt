@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Home%20Assistant-Add--on-blue.svg?logo=home-assistant" alt="Home Assistant Add-on">
   <img src="https://img.shields.io/badge/Architecture-aarch64%20%7C%20amd64-blue" alt="Supported Architectures">
   <img src="https://img.shields.io/badge/Bluetooth%20Mesh-SIG%20Standard-blueviolet.svg?logo=bluetooth" alt="Bluetooth Mesh SIG">
-  <a href="https://github.com/nitrokart/homeassistant-blemesh2mqtt/blob/master/blemesh2mqtt/CHANGELOG.md"><img src="https://img.shields.io/badge/Changelog-v0.1.29-brightgreen.svg" alt="Changelog"></a>
+  <a href="https://github.com/nitrokart/homeassistant-blemesh2mqtt/blob/master/blemesh2mqtt/CHANGELOG.md"><img src="https://img.shields.io/badge/Changelog-v0.1.30-brightgreen.svg" alt="Changelog"></a>
   <a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fnitrokart%2Fhomeassistant-blemesh2mqtt"><img src="https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg" alt="Add repository to my Home Assistant"></a>
 </p>
 
