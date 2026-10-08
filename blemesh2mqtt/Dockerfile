@@ -47,6 +47,7 @@ WORKDIR /opt/blemesh
 COPY requirements.txt .
 COPY dbus/blemesh2mqtt.conf /etc/dbus-1/system.d/blemesh2mqtt.conf
 RUN python3 -m venv /opt/venv \
+    && /opt/venv/bin/pip install --no-cache-dir wheel \
     && /opt/venv/bin/pip install --no-cache-dir --ignore-requires-python -r requirements.txt
 
 COPY gateway /opt/blemesh/gateway

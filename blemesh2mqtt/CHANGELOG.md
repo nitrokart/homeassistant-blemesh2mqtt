@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.29
+- Add-on manifest cleanup: remove deprecated `ingress_port` and obsolete `map` per Home Assistant add-on schema rules.
+- Shell script quality: fix SC2155 variable declaration and SC2164 directory change handling in `run.sh`.
+- Docker build optimization: preinstall `wheel` in venv to eliminate pip legacy setup.py warnings.
+
 ## 0.1.28
 - Fix brightness: the lamp's Lightness range is 1..100 (read from the device), not 0..65535. Panel (0-100%) and Home Assistant (1-255) now map onto that range.
 

@@ -1,5 +1,5 @@
 name: Bluetooth Mesh to MQTT
-version: 0.1.28
+version: 0.1.29
 slug: blemesh2mqtt
 image: ghcr.io/nitrokart/{arch}-blemesh2mqtt
 description: Bridge Bluetooth Mesh lights (e.g. Ledvance) to Home Assistant via MQTT
@@ -13,13 +13,10 @@ privileged:
   - NET_RAW
 apparmor: false
 ingress: true
-ingress_port: 8099
 panel_icon: mdi:bluetooth
 panel_title: BLE Mesh
 services:
   - mqtt:want
-map:
-  - data:rw
 options:
   adapter: 0
   io: auto

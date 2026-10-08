@@ -5,7 +5,8 @@ MESH_IO="$(bashio::config 'io')"
 if [ -z "$MESH_IO" ] || [ "$MESH_IO" = "null" ]; then
     MESH_IO=auto
 fi
-export LOG_LEVEL="$(bashio::config 'log_level')"
+LOG_LEVEL="$(bashio::config 'log_level')"
+export LOG_LEVEL
 MESH_DEBUG=()
 if [ "$LOG_LEVEL" = "debug" ] || [ "$LOG_LEVEL" = "trace" ]; then
     MESH_DEBUG+=(--debug --dbus-debug)
@@ -13,10 +14,11 @@ fi
 
 # defaults for the UI-managed MQTT settings
 if bashio::services.available mqtt; then
-    export MQTT_HOST="$(bashio::services mqtt host)"
-    export MQTT_PORT="$(bashio::services mqtt port)"
-    export MQTT_USER="$(bashio::services mqtt username)"
-    export MQTT_PASSWORD="$(bashio::services mqtt password)"
+    MQTT_HOST="$(bashio::services mqtt host)"
+    MQTT_PORT="$(bashio::services mqtt port)"
+    MQTT_USER="$(bashio::services mqtt username)"
+    MQTT_PASSWORD="$(bashio::services mqtt password)"
+    export MQTT_HOST MQTT_PORT MQTT_USER MQTT_PASSWORD
 fi
 
 mkdir -p /run/dbus /data/meshd/config /data/meshd/storage
@@ -66,5 +68,5 @@ if [ "$mesh_ready" != true ]; then
     exit 1
 fi
 
-cd /opt/blemesh/gateway
+cd /opt/blemesh/gateway || exit 1
 exec /opt/venv/bin/python gateway.py --basedir /data --reload
