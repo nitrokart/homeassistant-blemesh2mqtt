@@ -33,7 +33,7 @@ class GenericLightBridge(HassMqttBridge):
         }
 
         if node.supports(Light.BrightnessProperty):
-            message["brightness_scale"] = 50
+            message["brightness_scale"] = 255
             message["brightness"] = True
 
         if node.supports(Light.TemperatureProperty):
@@ -59,9 +59,9 @@ class GenericLightBridge(HassMqttBridge):
         message = {"state": "ON" if onoff else "OFF"}
 
         if onoff and node.supports(Light.BrightnessProperty):
-            message["brightness"] = node.retained(Light.BrightnessProperty, 100)
+            message["brightness"] = round(node.retained(Light.BrightnessProperty, 65535) * 255 / 65535)
         if onoff and node.supports(Light.TemperatureProperty):
-            message["color_temp"] = node.retained(Light.TemperatureProperty, 100)
+            message["color_temp"] = round(1000000 / node.retained(Light.TemperatureProperty, 4000))
 
         await self._messenger.publish(self.component, node, "state", message, retain=True)
 
@@ -69,7 +69,7 @@ class GenericLightBridge(HassMqttBridge):
         if "color_temp" in payload:
             await node.set_mireds(payload["color_temp"])
         if "brightness" in payload:
-            await node.set_brightness(payload["brightness"])
+            await node.set_brightness(round(payload["brightness"] * 65535 / 255))
         if payload.get("state") == "ON":
             await node.turn_on()
         if payload.get("state") == "OFF":
@@ -80,3 +80,6 @@ class GenericLightBridge(HassMqttBridge):
 
     async def _notify_brightness(self, node, brightness):
         await self._state(node, brightness > 0)
+
+    async def _notify_temperature(self, node, temperature):
+        await self._state(node, node.retained(Light.OnOffProperty, False))

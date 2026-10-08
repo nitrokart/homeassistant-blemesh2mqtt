@@ -54,8 +54,12 @@ class WebServer:
                 web.post("/api/nodes", self._save_node),
                 web.post("/api/nodes/{uuid}/configure", self._configure),
                 web.post("/api/nodes/{uuid}/power", self._power),
+                web.post("/api/nodes/{uuid}/brightness", self._brightness),
+                web.post("/api/nodes/{uuid}/color-temperature", self._color_temperature),
+                web.put("/api/nodes/{uuid}/name", self._rename),
                 web.post("/api/nodes/{uuid}/type", self._type),
                 web.post("/api/nodes/{uuid}/relay", self._relay),
+                web.post("/api/nodes/{uuid}/diagnose", self._diagnose),
                 web.delete("/api/nodes/{uuid}", self._remove),
                 web.put("/api/mqtt", self._save_mqtt),
             ]
@@ -68,7 +72,10 @@ class WebServer:
         logging.info(f"Web UI listening on port {port}")
 
     async def _index(self, request):
-        return web.FileResponse(os.path.join(STATIC, "index.html"))
+        return web.FileResponse(
+            os.path.join(STATIC, "index.html"),
+            headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
+        )
 
     async def _state(self, request):
         state = self._app.ui_state()
@@ -125,7 +132,37 @@ class WebServer:
     async def _power(self, request):
         uuid = _uuid(request.match_info["uuid"])
         body = await request.json()
-        self._app.start_job("power", self._app.set_power(uuid, bool(body.get("on"))))
+        on = body.get("on")
+        if not isinstance(on, bool):
+            raise ValueError("Power must be true or false")
+        self._app.start_job("power", self._app.set_power(uuid, on))
+        return web.json_response({})
+
+    async def _brightness(self, request):
+        uuid = _uuid(request.match_info["uuid"])
+        body = await request.json()
+        brightness = body.get("brightness")
+        if isinstance(brightness, bool) or not isinstance(brightness, (int, float)) or not 0 <= brightness <= 100:
+            raise ValueError("Brightness must be between 0 and 100")
+        self._app.start_job("brightness", self._app.set_brightness(uuid, brightness))
+        return web.json_response({})
+
+    async def _color_temperature(self, request):
+        uuid = _uuid(request.match_info["uuid"])
+        body = await request.json()
+        mireds = body.get("mireds")
+        if isinstance(mireds, bool) or not isinstance(mireds, int) or not 50 <= mireds <= 1250:
+            raise ValueError("Color temperature must be between 50 and 1250 mireds")
+        self._app.start_job("color_temperature", self._app.set_color_temperature(uuid, mireds))
+        return web.json_response({})
+
+    async def _rename(self, request):
+        uuid = _uuid(request.match_info["uuid"])
+        body = await request.json()
+        name = str(body.get("name", "")).strip()[:80]
+        if not name:
+            raise ValueError("Enter a device name")
+        self._app.start_job("rename", self._app.rename_node(uuid, name))
         return web.json_response({})
 
     async def _type(self, request):
@@ -140,6 +177,11 @@ class WebServer:
         uuid = _uuid(request.match_info["uuid"])
         body = await request.json()
         self._app.start_job("relay", self._app.set_relay(uuid, bool(body.get("relay"))))
+        return web.json_response({})
+
+    async def _diagnose(self, request):
+        uuid = _uuid(request.match_info["uuid"])
+        self._app.start_job("diagnose", self._app.diagnose(uuid))
         return web.json_response({})
 
     async def _remove(self, request):

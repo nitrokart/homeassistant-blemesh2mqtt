@@ -17,6 +17,7 @@ from bluetooth_mesh import models
 
 from tools import Config, LogBuffer, Store, Tasks
 from mesh import Node, NodeManager
+from mesh.diagnostics import Diagnostics
 from mqtt import HassMqttMessenger
 from web import WebServer
 
@@ -121,6 +122,7 @@ class MqttGateway(Application):
         self._store = Store(location=os.path.join(basedir, "store.yaml"))
         self._config = Config(os.path.join(basedir, "config.yaml"), defaults=self._mqtt_defaults())
         self._nodes = {}
+        self._diagnostics = Diagnostics(self)
 
         self._messenger = None
         self._messenger_task = None
@@ -365,6 +367,41 @@ class MqttGateway(Application):
                 raise ValueError("Device cannot be switched")
         await (node.turn_on() if on else node.turn_off())
 
+    async def set_brightness(self, uuid, brightness):
+        node = self._nodes.get(uuid)
+        if node is None:
+            raise ValueError("Unknown node")
+        if not isinstance(node, Light) or not node.supports(Light.BrightnessProperty):
+            raise ValueError("Device does not support brightness")
+        await node.set_brightness(round(brightness * 65535 / 100))
+
+    async def set_color_temperature(self, uuid, mireds):
+        node = self._nodes.get(uuid)
+        if node is None:
+            raise ValueError("Unknown node")
+        if not isinstance(node, Light) or not node.supports(Light.TemperatureProperty):
+            raise ValueError("Device does not support color temperature")
+        await node.set_mireds(mireds)
+
+    async def diagnose(self, uuid):
+        node = self._nodes.get(uuid)
+        if node is None:
+            raise ValueError("Unknown node")
+        await self._diagnostics.run(node)
+
+    async def rename_node(self, uuid, name):
+        if self._nodes.get(uuid) is None:
+            raise ValueError("Unknown node")
+
+        mesh = self._config.optional("mesh", None) or {}
+        for node_id, info in mesh.items():
+            if info.get("uuid") == str(uuid):
+                self._config.set_node(node_id, {**info, "name": name})
+                self._nodes.get(uuid).config = self._config.node_config(uuid)
+                await self.restart_messenger()
+                return
+        raise ValueError("Device configuration not found")
+
     async def remove(self, uuid, force=False):
         node = self._nodes.get(uuid)
 
@@ -392,6 +429,11 @@ class MqttGateway(Application):
     def ui_state(self):
         nodes = []
         for node in self._nodes.all():
+            supports_brightness = isinstance(node, Light) and node.supports(Light.BrightnessProperty)
+            supports_temperature = isinstance(node, Light) and node.supports(Light.TemperatureProperty)
+            brightness = node.retained(Light.BrightnessProperty, None) if supports_brightness else None
+            temperature = node.retained(Light.TemperatureProperty, None) if supports_temperature else None
+            onoff = node.retained(Light.OnOffProperty, None) if isinstance(node, Light) else None
             nodes.append(
                 {
                     "uuid": str(node.uuid),
@@ -402,6 +444,13 @@ class MqttGateway(Application):
                     "unicast": node.unicast,
                     "configured": node.configured,
                     "ready": node.ready.is_set(),
+                    "supports_onoff": isinstance(node, Light) and node.supports(Light.OnOffProperty),
+                    "supports_brightness": supports_brightness,
+                    "supports_temperature": supports_temperature,
+                    "brightness": round(brightness * 100 / 65535) if brightness is not None else None,
+                    "color_temp": round(1000000 / temperature) if temperature else None,
+                    "on": bool(onoff) if onoff is not None else None,
+                    "diagnostics": self._diagnostics.get(node.uuid),
                 }
             )
 
@@ -417,6 +466,8 @@ class MqttGateway(Application):
                 "password_set": bool(self._config.optional("mqtt.password")),
                 "connected": bool(self._messenger_task and not self._messenger_task.done()),
             },
+            "scan_rssi": {str(u): r for u, r in MESH_MODULES["scan"]._rssi.items()},
+            "gateway": {"address": self.address, "iv_index": self.iv_index},
             "job": self._job,
         }
 

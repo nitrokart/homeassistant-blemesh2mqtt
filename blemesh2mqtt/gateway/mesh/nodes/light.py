@@ -103,14 +103,14 @@ class Light(Generic):
             self.notify(Light.BrightnessProperty, result["present_lightness"])
 
     async def set_ctl_unack(self, temperature=None, brightness=None, **kwargs):
-        if temperature:
+        if temperature is not None:
             self.notify(Light.TemperatureProperty, temperature)
         else:
-            temperature = self.retained(Light.TemperatureProperty, 255)
-        if brightness:
-            self.notify(Light.BrightnessProperty, temperature)
+            temperature = self.retained(Light.TemperatureProperty, 4000)
+        if brightness is not None:
+            self.notify(Light.BrightnessProperty, brightness)
         else:
-            brightness = self.retained(Light.BrightnessProperty, 100)
+            brightness = self.retained(Light.BrightnessProperty, 65535)
 
         client = self._app.elements[0][models.LightCTLClient]
         await client.set_ctl_unack(self.unicast, self._app.app_keys[0][0], temperature, brightness, **kwargs)
@@ -122,5 +122,8 @@ class Light(Generic):
         result = state[self.unicast]
         if result is None:
             logging.warn(f"Received invalid result {state}")
-        elif not isinstance(result, BaseException):
-            print(result)
+        elif isinstance(result, BaseException):
+            logging.warning("Could not retrieve CTL state for %s: %s", self, result)
+        else:
+            self.notify(Light.BrightnessProperty, result["present_ctl_lightness"])
+            self.notify(Light.TemperatureProperty, result["present_ctl_temperature"])

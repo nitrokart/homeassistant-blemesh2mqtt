@@ -1,62 +1,42 @@
-# Bluetooth Mesh to MQTT — Home Assistant add-on
+# Bluetooth Mesh to MQTT
 
 [![CI](https://github.com/nitrokart/homeassistant-blemesh2mqtt/actions/workflows/ci.yml/badge.svg)](https://github.com/nitrokart/homeassistant-blemesh2mqtt/actions/workflows/ci.yml)
 [![Add repository to my Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fnitrokart%2Fhomeassistant-blemesh2mqtt)
 
-Pair Bluetooth Mesh lights (tested with a Ledvance E27 bulb) from a web UI and control them in Home Assistant through MQTT discovery. No cloud, no phone app.
+Provision compatible Bluetooth Mesh lights from Home Assistant and control them through MQTT discovery. No vendor cloud or phone app is required.
 
-Fork of [dominikberse/homeassistant-bluetooth-mesh](https://github.com/dominikberse/homeassistant-bluetooth-mesh), with fixes for Raspberry Pi onboard Bluetooth, a new UI, and packaging.
+![Bluetooth Mesh to MQTT architecture](docs/images/architecture.svg)
 
-## Requirements
+> **Compatibility:** one Ledvance E27 Bluetooth Mesh bulb is reported tested, but the exact model is not recorded. Other products are not verified by SKU. Check the [supported devices](docs/supported-devices.md) before buying hardware.
 
-- Home Assistant OS or Supervised (add-ons are required).
-- An MQTT broker (e.g. the Mosquitto add-on).
-- A Bluetooth adapter the add-on can use exclusively. A USB dongle is the safest choice. The Raspberry Pi 4 onboard chip works with `io: generic` (see below).
+## Get started
 
-## Install
+1. Make sure you use Home Assistant OS or Supervised, have an MQTT broker and MQTT integration, and have a Bluetooth adapter this add-on can use exclusively.
+2. Select the **Add repository to my Home Assistant** badge above, or add `https://github.com/nitrokart/homeassistant-blemesh2mqtt` under **Settings → Add-ons → Add-on Store → ⋮ → Repositories**.
+3. Install **Bluetooth Mesh to MQTT**. For Raspberry Pi 4 onboard Bluetooth, set `io` to `generic` in the add-on configuration.
+4. Start the add-on, open **BLE Mesh** from the sidebar, factory-reset a compatible light, then scan and provision it.
+5. Once MQTT is connected, Home Assistant discovers a `light.<name>` entity. Add it to a dashboard from Home Assistant.
 
-1. Click the badge above, or go to **Settings → Add-ons → Add-on Store → ⋮ → Repositories** and add:
-   `https://github.com/nitrokart/homeassistant-blemesh2mqtt`
-2. Install **Bluetooth Mesh to MQTT**. The image is built on your device the first time (10–20 minutes on a Pi).
-3. On a Raspberry Pi 4 set the option `io` to `generic`. Start the add-on.
-4. Open **BLE Mesh** in the sidebar, put the bulb in pairing mode, scan, and provision it.
+The first install builds BlueZ from source and may take 10–20 minutes on a Raspberry Pi. Follow the [full installation and pairing guide](docs/installation.md) for details.
 
-Alternative: copy the `blemesh2mqtt/` folder to the `/addons` share and install it under *Local add-ons*.
+## Documentation
 
-## Usage
+- [Documentation home](docs/index.md)
+- [Supported devices and capabilities](docs/supported-devices.md)
+- [Installation and pairing](docs/installation.md)
+- [Using the add-on and backups](docs/usage.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Development and releases](docs/development.md)
+- [Home Assistant add-on documentation](blemesh2mqtt/DOCS.md)
+- [Changelog](blemesh2mqtt/CHANGELOG.md)
 
-Full guide: [blemesh2mqtt/DOCS.md](blemesh2mqtt/DOCS.md). Changes: [CHANGELOG](blemesh2mqtt/CHANGELOG.md).
+## Important notes
 
-- Pairing data is stored in `/data` and survives updates.
-- Each paired light shows up as an MQTT device (`light.<name>`). Home Assistant does not add it to dashboards automatically.
-- Devices paired as `generic` have no on/off; change the type to `light` in the UI.
-- Turn on **relay** only for mains-powered devices; it extends the mesh range.
-- The UI does not show live on/off state (not read back from the device).
-
-## Options
-
-| Option | Default | Description |
-|---|---|---|
-| `adapter` | `0` | HCI index (`hciN`) used by `bluetooth-meshd` |
-| `io` | `auto` | `auto`, `generic` (raw HCI) or `mgmt` |
-| `log_level` | `info` | `debug`, `info`, `warning`, `error` |
-
-When adding options in development, bump `version` in `config.yaml` so Home Assistant refreshes them.
-
-## Troubleshooting
-
-- **`Unexpected non-whitespace character after JSON` in the UI**: ingress returned `502` because the add-on was restarting. Wait for `Web UI listening on port 8099` in the log and reload.
-- **Raspberry Pi 4**: use `io: generic`. With `auto` the controller rejects `LE Set Random Address` and provisioning packets are never sent. The image builds BlueZ 5.87 `bluetooth-meshd` and patches it so the Remote Provisioning client model exists after Attach.
-- **`bad-pdu` while provisioning**: the bulb didn't answer within ~60 s. Start provisioning while the bulb is in pairing mode, disable the HA Bluetooth integration if it shares the adapter, and try `io: generic`.
-- **Device cannot be switched**: it is `generic`; change its type to `light`.
-- **Debug logs**: set `log_level: debug` and follow with `ha apps logs local_blemesh2mqtt -f`.
-
-## Development
-
-- CI (`.github/workflows/ci.yml`): black, compile check, shellcheck, yamllint, UI script syntax, add-on linter, Docker build for amd64 and aarch64.
-- Release: bump `version` in `blemesh2mqtt/config.yaml`, add a `## <version>` entry to the CHANGELOG, then push tag `vX.Y.Z`. The release workflow checks the tag matches and publishes the notes.
-- Run without HA: set `ALLOWED_IPS`, then `python3 gateway.py --basedir <dir>` in `blemesh2mqtt/gateway` (needs `bluetooth-meshd` and a system D-Bus).
+- The add-on takes exclusive control of its Bluetooth adapter. Do not share that adapter with Home Assistant's Bluetooth integration or another Bluetooth service.
+- Only compatible Bluetooth Mesh lighting models are supported. BLE-only, Zigbee, Wi-Fi, vendor-specific mesh protocols, and RGB/color controls are not supported.
+- Mesh credentials and device settings are saved in `/data` and included in Home Assistant backups. Keep backups private.
+- This project is a fork of [dominikberse/homeassistant-bluetooth-mesh](https://github.com/dominikberse/homeassistant-bluetooth-mesh), with Raspberry Pi onboard Bluetooth fixes, a new UI, and add-on packaging.
 
 ## License
 
-No license file yet. The upstream project does not declare one; pick and add a license before wider reuse.
+There is currently no `LICENSE` file. Without an explicit license, this repository is not yet licensed for reuse, modification, or redistribution. A license must be chosen and added before inviting the public to reuse this project as open source.

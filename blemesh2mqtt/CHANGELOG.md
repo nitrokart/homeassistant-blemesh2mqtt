@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.22
+- Add per-device Diagnose: heartbeat-confirmed hop distance, default TTL, network transmit, relay, proxy, friend and beacon state with round-trip times, plus raw debug JSON.
+- Show scan signal strength (RSSI) for unpaired devices.
+
+## 0.1.21
+- Prevent Home Assistant Ingress from caching the web UI HTML.
+
+## 0.1.20
+- Add direct brightness and color-temperature controls for capable lights, with corrected MQTT brightness scaling and CTL state reporting.
+- Add device renaming and a mesh overview that marks unavailable topology links as unknown rather than inferring them.
+
 ## 0.1.19
 - Clearer provisioning errors (timeout, device did not answer).
 - No more harmless "Missing handler" warnings for the gateway's own MQTT publishes.

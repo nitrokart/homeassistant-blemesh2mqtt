@@ -98,6 +98,17 @@
   .device-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
   .opt label.lbl { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
   .opt .hint { margin: 5px 0 0; color: var(--muted); font-size: 12.5px; }
+  .range-value { float: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .range-input { width: 100%; accent-color: var(--accent); }
+  .network-note { margin-bottom: 12px; }
+  .network-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .network-node { padding: 14px; }
+  .network-node h3 { margin: 0 0 6px; font-size: 15px; overflow-wrap: anywhere; }
+  .network-node p { margin: 3px 0; }
+  .network-node .badge { margin: 0; }
+  .rename-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-top: 14px; }
+  .rename-form label { flex: 1 1 220px; }
+  .rename-form input { display: block; width: 100%; min-height: 40px; margin-top: 4px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
   .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; }
   .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
   .switch .track { position: relative; flex: none; width: 42px; height: 24px; border-radius: 999px; background: var(--off); transition: background .15s; }
@@ -155,8 +166,8 @@
   <header class="top">
     <div class="top-row">
       <div>
-        <h1>Bluetooth Mesh to MQTT</h1>
-        <p class="sub">Control Bluetooth Mesh lights from Home Assistant.</p>
+        <h1>Bluetooth Mesh Manager</h1>
+        <p class="sub">Pair, manage, and control your Bluetooth Mesh devices.</p>
       </div>
       <div class="pills">
         <span id="mqttstate" class="pill">MQTT</span>
@@ -171,7 +182,16 @@
   <main>
     <section aria-labelledby="devices-title">
       <div class="section-head"><h2 id="devices-title">Your devices</h2><span id="nodecount" class="count"></span></div>
+      <p class="sub">Devices are discovered in Home Assistant through MQTT. Add entities to dashboards from Home Assistant.</p>
       <div id="nodes" class="devices"></div>
+    </section>
+
+    <section aria-labelledby="network-title">
+      <div class="section-head"><h2 id="network-title">Mesh network</h2><span id="networkcount" class="count"></span></div>
+      <div id="network-note" class="banner info network-note" role="status">
+        <span class="icon">i</span><div><p class="title">Hop distance, not links</p><p class="body">Bluetooth Mesh does not report neighbor links. Run Diagnose on a device to measure its confirmed hop distance and radio settings. Nothing is estimated.</p></div>
+      </div>
+      <div id="network" class="network-grid"></div>
     </section>
 
     <section aria-labelledby="add-title">
@@ -291,8 +311,12 @@ const JOB_LABELS = {
   provision: "Pairing the device. This can take a few minutes, keep it powered and in pairing mode",
   configure: "Configuring the device",
   power: "Sending command",
+  brightness: "Setting brightness",
+  color_temperature: "Setting color temperature",
+  rename: "Updating device name",
   type: "Changing device type",
   relay: "Updating relay setting",
+  diagnose: "Running diagnostics (about 30 seconds)",
   remove: "Removing the device",
 };
 
@@ -345,8 +369,8 @@ function renderDevice(n, types, running) {
       el("div", { className: "bulb", "aria-hidden": "true" }, "💡"),
       el("div", {}, el("h3", { className: "device-name" }, n.name || n.id || "Unnamed device"), state)),
     el("div", { className: "seg", role: "group", "aria-label": `Power for ${n.name || n.id}` },
-      el("button", { type: "button", textContent: "On", disabled: running, onclick: () => runAction(() => api("POST", `api/nodes/${n.uuid}/power`, { on: true })) }),
-      el("button", { type: "button", textContent: "Off", disabled: running, onclick: () => runAction(() => api("POST", `api/nodes/${n.uuid}/power`, { on: false })) })));
+      el("button", { type: "button", className: n.on === true ? "on" : "", textContent: "On", disabled: running || !n.supports_onoff, onclick: () => runAction(() => api("POST", `api/nodes/${n.uuid}/power`, { on: true })) }),
+      el("button", { type: "button", className: n.on === false ? "on" : "", textContent: "Off", disabled: running || !n.supports_onoff, onclick: () => runAction(() => api("POST", `api/nodes/${n.uuid}/power`, { on: false })) })));
 
   const typeSelect = el("select", { disabled: running, "aria-label": "Device type" });
   for (const t of types) typeSelect.add(new Option(t, t));
@@ -362,6 +386,36 @@ function renderDevice(n, types, running) {
     el("div", { className: "opt" }, el("label", { className: "lbl" }, "Mesh relay"),
       el("label", { className: "switch" }, relay, el("span", { className: "track" }), "Relay messages"),
       el("p", { className: "hint" }, "Turn on for mains-powered devices to extend range. Leave off for battery devices.")));
+  if (n.supports_brightness) {
+    const brightness = el("input", { className: "range-input", type: "range", min: "0", max: "100", step: "1",
+      value: String(n.brightness ?? 100), disabled: running, "aria-label": `Brightness for ${n.name || n.id}` });
+    const brightnessValue = el("span", { className: "range-value" }, `${brightness.value}%`);
+    brightness.oninput = () => { brightnessValue.textContent = `${brightness.value}%`; };
+    brightness.onchange = () => runAction(() => api("POST", `api/nodes/${n.uuid}/brightness`, { brightness: Number(brightness.value) }));
+    opts.append(el("div", { className: "opt" },
+      el("label", { className: "lbl" }, "Brightness", brightnessValue), brightness,
+      el("p", { className: "hint" }, "Adjust the light output.")));
+  }
+  if (n.supports_temperature) {
+    const temperature = el("input", { className: "range-input", type: "range", min: "50", max: "1250", step: "1",
+      value: String(n.color_temp ?? 250), disabled: running, "aria-label": `Color temperature for ${n.name || n.id}` });
+    const temperatureValue = el("span", { className: "range-value" }, `${Math.round(1000000 / Number(temperature.value))} K`);
+    temperature.oninput = () => { temperatureValue.textContent = `${Math.round(1000000 / Number(temperature.value))} K`; };
+    temperature.onchange = () => runAction(() => api("POST", `api/nodes/${n.uuid}/color-temperature`, { mireds: Number(temperature.value) }));
+    opts.append(el("div", { className: "opt" },
+      el("label", { className: "lbl" }, "Color temperature", temperatureValue), temperature,
+      el("p", { className: "hint" }, "Cooler at the left, warmer at the right.")));
+  }
+
+  const renameInput = el("input", { name: "name", value: n.name || n.id || "", maxLength: "80", required: true,
+    "aria-label": `Name for ${n.name || n.id}` });
+  const renameForm = el("form", { className: "rename-form" },
+    el("label", {}, "Device name", renameInput),
+    el("button", { type: "submit", className: "btn ghost small", textContent: "Save name", disabled: running }));
+  renameForm.onsubmit = (event) => {
+    event.preventDefault();
+    runAction(() => api("PUT", `api/nodes/${n.uuid}/name`, { name: renameInput.value }));
+  };
 
   const removeBtn = el("button", { type: "button", className: "btn danger small", textContent: "Remove", disabled: running,
     onclick: () => confirm(`Reset and remove "${n.name || n.id}"? The device will need to be paired again.`) &&
@@ -378,8 +432,48 @@ function renderDevice(n, types, running) {
         onclick: () => runAction(() => api("POST", `api/nodes/${n.uuid}/configure`)) }),
       removeBtn, forceBtn));
 
-  card.append(head, opts, foot);
+  card.append(head, opts, renameForm, foot);
   return card;
+}
+
+function diagLines(d) {
+  if (!d) return "Not diagnosed yet.";
+  const p = d.probes || {};
+  const v = (k) => (p[k] && p[k].ok ? p[k].value : null);
+  const rtt = (k) => (p[k] && p[k].ok ? `${p[k].rtt_ms} ms` : "n/a");
+  const tx = v("network_transmit");
+  const rl = v("relay");
+  const lines = [
+    `Hops to gateway: ${d.hops ?? "unknown"}${v("hops") ? ` (min ${v("hops").min_hops})` : ""}`,
+    `Config round trip: ${rtt("default_ttl")}`,
+    `Default TTL: ${v("default_ttl") ? v("default_ttl").TTL ?? JSON.stringify(v("default_ttl")) : "n/a"}`,
+    `Network transmit: ${tx ? JSON.stringify(tx) : "n/a"}`,
+    `Relay: ${rl ? JSON.stringify(rl) : "n/a"}`,
+    `Checked: ${new Date(d.at * 1000).toLocaleTimeString()}`,
+  ];
+  return lines.join("\n");
+}
+
+function renderNetwork(state) {
+  const network = $("#network");
+  network.replaceChildren();
+  $("#networkcount").textContent = `${state.nodes.length} ${state.nodes.length === 1 ? "device" : "devices"}`;
+  if (!state.nodes.length) {
+    network.append(el("div", { className: "card empty" }, el("strong", {}, "No mesh devices yet"), "Pair a device to see it in the network overview."));
+    return;
+  }
+  for (const n of state.nodes) {
+    network.append(el("article", { className: "card network-node" },
+      el("h3", {}, n.name || n.id || "Unnamed device"),
+      el("p", { className: `badge${n.ready ? " ready" : ""}` }, n.ready ? "Ready" : n.configured ? "Starting" : "Needs configuring"),
+      el("p", { className: "mono" }, `Address ${n.unicast} · ${n.type}`),
+      el("p", { className: "count" }, `Relay ${n.relay ? "enabled" : "disabled"} · Hops: ${n.diagnostics && n.diagnostics.hops != null ? n.diagnostics.hops : "unknown"}`),
+      el("pre", { className: "mono", textContent: diagLines(n.diagnostics) }),
+      el("button", { type: "button", className: "btn ghost small", textContent: "Diagnose", disabled: running,
+        onclick: () => runAction(() => api("POST", `api/nodes/${n.uuid}/diagnose`, {})) }),
+      el("details", {}, el("summary", {}, "Raw debug data"),
+        el("pre", { className: "mono", textContent: JSON.stringify(n.diagnostics || {}, null, 2) }))));
+  }
 }
 
 function renderNodes(state, running) {
@@ -405,7 +499,8 @@ function renderFound(state, running) {
   }
   for (const uuid of state.unprovisioned) {
     found.append(el("div", { className: "found-row" },
-      el("div", {}, el("strong", {}, "Unpaired mesh device"), el("div", { className: "mono" }, uuid)),
+      el("div", {}, el("strong", {}, "Unpaired mesh device"), el("div", { className: "mono" }, uuid),
+        el("div", { className: "count" }, state.scan_rssi && state.scan_rssi[uuid] != null ? `Signal ${state.scan_rssi[uuid]} dBm` : "")),
       el("button", { type: "button", className: "btn small", textContent: "Pair this device", disabled: running, onclick: () => {
         const f = $("#add");
         f.hidden = false;
@@ -428,6 +523,7 @@ function render(state) {
 
   renderJob(state.job);
   renderWarnings(state);
+  renderNetwork(state);
 
   // do not rebuild the device list while the user is interacting with a control inside it
   if (!document.activeElement || !$("#nodes").contains(document.activeElement)) renderNodes(state, running);

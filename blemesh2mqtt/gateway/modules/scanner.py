@@ -19,16 +19,19 @@ class ScannerModule(Module):
 
         self._unprovisioned = set()
         self._last_seen = {}
+        self._rssi = {}
 
     def clear_results(self):
         self._unprovisioned.clear()
         self._last_seen.clear()
+        self._rssi.clear()
 
     def _expire_stale_results(self):
         cutoff = time.monotonic() - self.RESULT_TTL
         expired = [uuid for uuid, seen_at in self._last_seen.items() if seen_at < cutoff]
         for uuid in expired:
             self._last_seen.pop(uuid, None)
+            self._rssi.pop(uuid, None)
             self._unprovisioned.discard(uuid)
 
     def recent_devices(self):
@@ -50,6 +53,7 @@ class ScannerModule(Module):
             uuid = UUID(bytes=data[:16])
             self._unprovisioned.add(uuid)
             self._last_seen[uuid] = time.monotonic()
+            self._rssi[uuid] = rssi
             logging.info(f"Found unprovisioned node: {uuid}")
         except:
             logging.exception("Failed to retrieve UUID")
