@@ -96,6 +96,32 @@ class Diagnostics:
 
         await self._probe(report, "hops", self._measure_hops(client, address))
 
+        lightness = None
+        if hasattr(node, "set_lightness_ack"):
+            try:
+                lightness = self._app.elements[0][models.LightLightnessClient]
+            except Exception:
+                lightness = None
+        if lightness is not None:
+            app_index = self._app.app_keys[0][0]
+
+            async def rng():
+                result = await lightness.get_lightness_range([address], app_index, timeout=6)
+                value = result.get(address)
+                if value is None or isinstance(value, BaseException):
+                    raise TimeoutError("no answer")
+                return value
+
+            async def present():
+                result = await lightness.get_lightness([address], app_index)
+                value = result.get(address)
+                if value is None or isinstance(value, BaseException):
+                    raise TimeoutError("no answer")
+                return value
+
+            await self._probe(report, "lightness_range", rng())
+            await self._probe(report, "lightness_state", present())
+
         hops = report["probes"].get("hops", {})
         report["reachable"] = any(p.get("ok") for p in report["probes"].values())
         report["hops"] = hops.get("value", {}).get("hops") if hops.get("ok") else None

@@ -365,6 +365,10 @@ class MqttGateway(Application):
             node = self._nodes.get(uuid)
             if not hasattr(node, "turn_on"):
                 raise ValueError("Device cannot be switched")
+        if on and isinstance(node, Light) and node.supports(Light.BrightnessProperty):
+            if not node.retained(Light.BrightnessProperty, 0):
+                await node.set_brightness(node.lightness_max)
+                return
         await (node.turn_on() if on else node.turn_off())
 
     async def set_brightness(self, uuid, brightness):
@@ -373,7 +377,9 @@ class MqttGateway(Application):
             raise ValueError("Unknown node")
         if not isinstance(node, Light) or not node.supports(Light.BrightnessProperty):
             raise ValueError("Device does not support brightness")
-        await node.set_brightness(round(brightness * 65535 / 100))
+        value = node.lightness_from_fraction(brightness / 100)
+        logging.info("Setting brightness of %s to %s%% (lightness %s)", node, brightness, value)
+        await node.set_brightness(value)
 
     async def set_color_temperature(self, uuid, mireds):
         node = self._nodes.get(uuid)
@@ -447,7 +453,9 @@ class MqttGateway(Application):
                     "supports_onoff": isinstance(node, Light) and node.supports(Light.OnOffProperty),
                     "supports_brightness": supports_brightness,
                     "supports_temperature": supports_temperature,
-                    "brightness": round(brightness * 100 / 65535) if brightness is not None else None,
+                    "brightness": (
+                        round(node.fraction_from_lightness(brightness) * 100) if brightness else (100 if onoff else 0)
+                    ),
                     "color_temp": round(1000000 / temperature) if temperature else None,
                     "on": bool(onoff) if onoff is not None else None,
                     "diagnostics": self._diagnostics.get(node.uuid),

@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.28
+- Fix brightness: the lamp's Lightness range is 1..100 (read from the device), not 0..65535. Panel (0-100%) and Home Assistant (1-255) now map onto that range.
+
+## 0.1.27
+- Fix brightness control: notify target lightness instead of transient transition present_lightness (which caused brightness to report 0%).
+- Fix MQTT brightness set conflict: avoid sending redundant GenericOnOffSet when brightness is explicitly set.
+- Redesign Web UI into modern 5-tab dashboard (Devices, Mesh Topology Map, Pairing Wizard, Logs Console, Settings).
+
+## 0.1.26
+- Diagnose also reads the device's Lightness range and present Lightness (to debug brightness).
+
+## 0.1.25
+- Brightness now uses an acknowledged Light Lightness Set and logs the status the device reports (falls back to unacknowledged if no reply).
+
+## 0.1.24
+- Keep the "Raw debug data" panel open across refreshes.
+- Brightness slider defaults to 100% (range 1-100); turning a light on from 0% restores full brightness.
+- Log every brightness command for debugging.
+
+## 0.1.23
+- Fix the web UI showing no devices (render error in the mesh network section introduced in 0.1.22).
+
 ## 0.1.22
 - Add per-device Diagnose: heartbeat-confirmed hop distance, default TTL, network transmit, relay, proxy, friend and beacon state with round-trip times, plus raw debug JSON.
 - Show scan signal strength (RSSI) for unpaired devices.

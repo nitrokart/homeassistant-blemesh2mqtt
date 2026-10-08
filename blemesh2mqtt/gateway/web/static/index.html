@@ -7,263 +7,1565 @@
 <title>Bluetooth Mesh to MQTT</title>
 <style>
   :root {
-    --bg: #f4f6f8; --card: #ffffff; --ink: #1c2327; --muted: #5f6c74; --line: #dfe5e9;
-    --accent: #1f7ae0; --accent-ink: #ffffff; --accent-soft: #e6f0fc;
-    --ok: #1c8a4a; --ok-soft: #e3f4ea;
-    --warn: #a15c00; --warn-soft: #fff3de; --warn-line: #f0c36b;
-    --bad: #b3261e; --bad-soft: #fdeceb; --bad-line: #f1b5b1;
-    --off: #8a959c; --code: #12181b; --code-ink: #dbe4e8;
-    --radius: 14px; --shadow: 0 1px 2px rgba(15, 25, 30, .06), 0 6px 20px rgba(15, 25, 30, .05);
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-card-subtle: #f1f5f9;
+    --bg-card-hover: #f8fafc;
+    --border-card: #e2e8f0;
+    --border-subtle: #cbd5e1;
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --text-inverse: #ffffff;
+
+    --accent: #0284c7;
+    --accent-hover: #0369a1;
+    --accent-light: #e0f2fe;
+    --accent-text: #0369a1;
+    --accent-glow: rgba(2, 132, 199, 0.25);
+
+    --ok: #10b981;
+    --ok-light: #ecfdf5;
+    --ok-border: #a7f3d0;
+    --ok-text: #065f46;
+
+    --warn: #f59e0b;
+    --warn-light: #fffbeb;
+    --warn-border: #fde68a;
+    --warn-text: #92400e;
+
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
+    --danger-border: #fecaca;
+    --danger-text: #991b1b;
+
+    --console-bg: #090d16;
+    --console-text: #e2e8f0;
+    --console-border: #1e293b;
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
   }
+
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #101518; --card: #1a2126; --ink: #e6ecef; --muted: #98a6ae; --line: #2b353b;
-      --accent: #4a9bff; --accent-ink: #06131f; --accent-soft: #14283d;
-      --ok: #5fd18c; --ok-soft: #13291d;
-      --warn: #f0b95a; --warn-soft: #2f2412; --warn-line: #6b5120;
-      --bad: #ff8a80; --bad-soft: #301816; --bad-line: #6b2b27;
-      --off: #6c7a82; --code: #0b0f11; --code-ink: #c9d5da;
-      --shadow: none;
+      --bg-page: #0b0f17;
+      --bg-card: #131a26;
+      --bg-card-subtle: #1a2332;
+      --bg-card-hover: #1e293b;
+      --border-card: #222d3f;
+      --border-subtle: #334155;
+
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --text-inverse: #0f172a;
+
+      --accent: #38bdf8;
+      --accent-hover: #7dd3fc;
+      --accent-light: rgba(56, 189, 248, 0.12);
+      --accent-text: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.35);
+
+      --ok: #34d399;
+      --ok-light: rgba(52, 211, 153, 0.12);
+      --ok-border: rgba(52, 211, 153, 0.25);
+      --ok-text: #6ee7b7;
+
+      --warn: #fbbf24;
+      --warn-light: rgba(251, 191, 36, 0.12);
+      --warn-border: rgba(251, 191, 36, 0.25);
+      --warn-text: #fde68a;
+
+      --danger: #f87171;
+      --danger-light: rgba(248, 113, 113, 0.12);
+      --danger-border: rgba(248, 113, 113, 0.25);
+      --danger-text: #fca5a5;
+
+      --console-bg: #070a10;
+      --console-text: #cbd5e1;
+      --console-border: #1a2332;
+
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
     }
   }
-  * { box-sizing: border-box; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
   body {
-    margin: 0; min-height: 100vh; color: var(--ink); background: var(--bg);
-    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background-color: var(--bg-page);
+    padding-bottom: 40px;
   }
-  button, input, select { font: inherit; color: inherit; }
-  button { cursor: pointer; }
-  button:disabled { cursor: not-allowed; opacity: .5; }
-  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .shell { width: min(960px, calc(100% - 32px)); margin: 0 auto; }
 
-  header.top { padding: 22px 0 6px; }
-  .top-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-  h1 { margin: 0; font-size: 24px; line-height: 1.2; }
-  .sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
-  [hidden] { display: none !important; }
-  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; border: none; background: transparent; }
+  button:disabled { cursor: not-allowed; opacity: 0.55; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .shell {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  /* App Header */
+  header.app-header {
+    padding: 20px 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .header-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+  }
+  .brand-titles h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--accent-light);
+    color: var(--accent-text);
+  }
+  .brand-titles p {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .status-pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
   .pill {
-    display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 999px;
-    border: 1px solid var(--line); background: var(--card); font-size: 13px; font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    box-shadow: var(--shadow-sm);
   }
-  .pill::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
-  .pill.good::before { background: var(--ok); }
-  .pill.busy::before { background: var(--warn); animation: pulse 1s infinite; }
-  @keyframes pulse { 50% { opacity: .3; } }
+  .pill-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+  }
+  .pill.online .pill-dot {
+    background: var(--ok);
+    box-shadow: 0 0 6px var(--ok);
+  }
+  .pill.busy .pill-dot {
+    background: var(--warn);
+    animation: pulse-dot 1.2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
 
+  /* Job & Notice Banners */
   .banner {
-    display: flex; gap: 12px; align-items: flex-start; margin: 14px 0 0; padding: 12px 14px;
-    border: 1px solid var(--line); border-radius: 12px; background: var(--card);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    box-shadow: var(--shadow-sm);
+    animation: slide-down 0.2s ease-out;
   }
-  .banner .icon { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
-  .banner p { margin: 0; }
-  .banner .title { font-weight: 700; }
-  .banner .body { color: var(--muted); font-size: 14px; }
-  .banner.warn { background: var(--warn-soft); border-color: var(--warn-line); }
-  .banner.warn .icon { background: var(--warn); color: var(--warn-soft); }
-  .banner.bad { background: var(--bad-soft); border-color: var(--bad-line); }
-  .banner.bad .icon { background: var(--bad); color: var(--bad-soft); }
-  .banner.info { background: var(--accent-soft); }
-  .banner.info .icon { background: var(--accent); color: var(--accent-ink); }
-  .banner.ok { background: var(--ok-soft); }
-  .banner.ok .icon { background: var(--ok); color: var(--ok-soft); }
-  .banner .spinner { width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; border: 3px solid var(--warn-line); border-top-color: var(--warn); animation: spin .8s linear infinite; flex: none; }
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .banner-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+  .banner.warn {
+    background: var(--warn-light);
+    border: 1px solid var(--warn-border);
+    color: var(--warn-text);
+  }
+  .banner.danger {
+    background: var(--danger-light);
+    border: 1px solid var(--danger-border);
+    color: var(--danger-text);
+  }
+  .banner.ok {
+    background: var(--ok-light);
+    border: 1px solid var(--ok-border);
+    color: var(--ok-text);
+  }
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2.5px solid currentColor;
+    border-top-color: transparent;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .banner[hidden] { display: none; }
 
-  section { margin-top: 26px; }
-  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-  h2 { margin: 0; font-size: 18px; }
-  .count { color: var(--muted); font-size: 13px; }
-
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
-  .empty { padding: 28px 20px; text-align: center; color: var(--muted); }
-  .empty strong { display: block; margin-bottom: 4px; color: var(--ink); font-size: 16px; }
-
-  .devices { display: grid; gap: 14px; }
-  .device { padding: 16px; }
-  .device-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .device-id { display: flex; align-items: center; gap: 12px; min-width: 0; }
-  .bulb { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); font-size: 22px; }
-  .device-name { margin: 0; font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
-  .badge { display: inline-block; margin-top: 2px; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--warn-soft); color: var(--warn); }
-  .badge.ready { background: var(--ok-soft); color: var(--ok); }
-  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
-  .seg button { min-width: 74px; padding: 9px 18px; border: 0; background: transparent; font-weight: 700; }
-  .seg button.on { background: var(--accent); color: var(--accent-ink); }
-  .seg button:hover:not(:disabled) { background: var(--accent-soft); }
-  .seg button.on:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
-  .device-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
-  .opt label.lbl { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-  .opt .hint { margin: 5px 0 0; color: var(--muted); font-size: 12.5px; }
-  .range-value { float: right; color: var(--ink); font-variant-numeric: tabular-nums; }
-  .range-input { width: 100%; accent-color: var(--accent); }
-  .network-note { margin-bottom: 12px; }
-  .network-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-  .network-node { padding: 14px; }
-  .network-node h3 { margin: 0 0 6px; font-size: 15px; overflow-wrap: anywhere; }
-  .network-node p { margin: 3px 0; }
-  .network-node .badge { margin: 0; }
-  .rename-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-top: 14px; }
-  .rename-form label { flex: 1 1 220px; }
-  .rename-form input { display: block; width: 100%; min-height: 40px; margin-top: 4px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
-  .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; }
-  .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-  .switch .track { position: relative; flex: none; width: 42px; height: 24px; border-radius: 999px; background: var(--off); transition: background .15s; }
-  .switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s; }
-  .switch input:checked + .track { background: var(--accent); }
-  .switch input:checked + .track::after { transform: translateX(18px); }
-  .switch input:focus-visible + .track { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .device-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
-  .mono { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); overflow-wrap: anywhere; }
-  .links { display: flex; gap: 8px; flex-wrap: wrap; }
-
-  .btn { min-height: 40px; padding: 0 16px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
-  .btn:hover:not(:disabled) { filter: brightness(1.08); }
-  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
-  .btn.ghost:hover:not(:disabled) { background: var(--accent-soft); filter: none; }
-  .btn.danger { background: transparent; color: var(--bad); border-color: var(--bad-line); }
-  .btn.danger:hover:not(:disabled) { background: var(--bad-soft); filter: none; }
-  .btn.small { min-height: 34px; padding: 0 12px; font-size: 13px; }
-
-  .steps { margin: 0; padding: 16px 18px 6px 38px; color: var(--muted); }
-  .steps li { margin-bottom: 8px; }
-  .steps strong { color: var(--ink); }
-  .add-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 4px 18px 16px; }
-  .found { border-top: 1px solid var(--line); }
-  .found-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); }
-  .found-row:last-child { border-bottom: 0; }
-  form.provision { padding: 18px; border-top: 1px solid var(--line); background: var(--accent-soft); border-radius: 0 0 var(--radius) var(--radius); }
-  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 14px 0; }
-  .field { display: grid; gap: 5px; }
-  .field > span { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-  .field small { color: var(--muted); font-size: 12.5px; }
-  input[type=text], input[type=number], input[type=password], input:not([type]), select {
-    width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card);
+  /* Tab Navigation */
+  nav.tab-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-top: 4px;
   }
-  form[hidden] { display: none; }
-  .form-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  nav.tab-nav::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: var(--radius-md);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+  .tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-card-subtle);
+  }
+  .tab-btn.active {
+    color: var(--accent-text);
+    background: var(--accent-light);
+  }
+  .tab-badge {
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--border-card);
+    color: var(--text-muted);
+  }
+  .tab-btn.active .tab-badge {
+    background: var(--accent);
+    color: var(--text-inverse);
+  }
 
-  details.card { margin-top: 14px; overflow: hidden; }
-  details > summary { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; font-weight: 700; cursor: pointer; list-style: none; }
-  details > summary::-webkit-details-marker { display: none; }
-  details > summary::after { content: "+"; font-size: 22px; color: var(--muted); line-height: 1; }
-  details[open] > summary::after { content: "–"; }
-  .details-body { padding: 0 18px 18px; border-top: 1px solid var(--line); }
-  .mqtt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; padding-top: 14px; }
-  pre { max-height: 300px; margin: 14px 0 0; padding: 14px; overflow: auto; border-radius: 10px; background: var(--code); color: var(--code-ink); font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .help-list { margin: 14px 0 0; padding-left: 20px; color: var(--muted); }
-  .help-list li { margin-bottom: 6px; }
-  .help-list strong { color: var(--ink); }
-  footer { margin: 30px 0 40px; color: var(--muted); font-size: 12.5px; text-align: center; }
-  a { color: var(--accent); }
+  /* Main View Panels */
+  .view-panel {
+    display: none;
+    margin-top: 20px;
+  }
+  .view-panel.active {
+    display: block;
+    animation: fade-in 0.2s ease-out;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Common Card Components */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-card);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .card-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .card-body {
+    padding: 20px;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+  }
+  .empty-icon {
+    width: 54px;
+    height: 54px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: var(--bg-card-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+  }
+  .empty-state h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .empty-state p {
+    max-width: 420px;
+    margin: 0 auto 18px;
+    font-size: 13px;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.35);
+  }
+  .btn-subtle {
+    background: var(--bg-card-subtle);
+    color: var(--text-primary);
+    border: 1px solid var(--border-card);
+  }
+  .btn-subtle:hover:not(:disabled) {
+    background: var(--border-card);
+  }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger-border);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: var(--danger-light);
+  }
+  .btn-sm {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+    border-radius: var(--radius-sm);
+  }
+  .btn-icon-only {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Devices Grid */
+  .devices-header-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .devices-stats {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .devices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 16px;
+  }
+
+  .device-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .device-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+  .device-card.is-on {
+    border-color: rgba(2, 132, 199, 0.4);
+  }
+  .device-card-glow {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .device-card.is-on .device-card-glow {
+    opacity: 1;
+  }
+
+  .device-card-head {
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-card);
+  }
+  .device-identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .device-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background: var(--bg-card-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 22px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .device-card.is-on .device-avatar {
+    background: #fef08a;
+    color: #ca8a04;
+    box-shadow: 0 0 16px rgba(234, 179, 8, 0.4);
+  }
+  .device-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .device-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .device-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    word-break: break-word;
+    line-height: 1.25;
+  }
+  .device-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--bg-card-subtle);
+    color: var(--text-secondary);
+  }
+  .tag.ready {
+    background: var(--ok-light);
+    color: var(--ok-text);
+  }
+  .tag.relay {
+    background: var(--accent-light);
+    color: var(--accent-text);
+  }
+
+  /* Tactile Power Switch */
+  .power-switch-group {
+    display: inline-flex;
+    background: var(--bg-card-subtle);
+    border: 1px solid var(--border-card);
+    border-radius: 999px;
+    padding: 2px;
+  }
+  .power-btn {
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .power-btn.active-on {
+    background: var(--ok);
+    color: #ffffff;
+    box-shadow: 0 1px 4px rgba(16, 185, 129, 0.35);
+  }
+  .power-btn.active-off {
+    background: var(--text-muted);
+    color: #ffffff;
+  }
+
+  /* Device Card Controls */
+  .device-card-controls {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .control-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+  .control-value-pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--bg-card-subtle);
+    color: var(--text-primary);
+  }
+
+  /* Custom Sliders */
+  .slider-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .custom-slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--bg-card-subtle);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  .custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid var(--accent);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .custom-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+  .slider-temp {
+    background: linear-gradient(to right, #93c5fd 0%, #fef08a 50%, #f97316 100%);
+  }
+
+  /* Device Card Footer / Tech Specs Button */
+  .device-card-foot {
+    margin-top: auto;
+    padding: 10px 16px;
+    background: var(--bg-card-subtle);
+    border-top: 1px solid var(--border-card);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .tech-specs-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--accent-text);
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+  }
+  .tech-specs-btn:hover {
+    background: var(--accent-light);
+  }
+
+  /* Inline Rename Mode */
+  .rename-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .rename-input {
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    font-size: 13px;
+    width: 160px;
+  }
+
+  /* Engineer Inspector Drawer inside Card */
+  .tech-drawer {
+    background: var(--bg-card-subtle);
+    border-top: 1px solid var(--border-card);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: slide-down 0.15s ease-out;
+  }
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .metric-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  .metric-val {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .metric-val.fast { color: var(--ok); }
+  .metric-val.slow { color: var(--warn); }
+
+  .tech-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .raw-json-details summary {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    margin-top: 4px;
+  }
+  .raw-json-box {
+    background: var(--console-bg);
+    color: var(--console-text);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    max-height: 160px;
+    overflow: auto;
+    margin-top: 6px;
+    white-space: pre-wrap;
+  }
+
+  /* Topology View */
+  .topo-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .topo-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .topo-canvas-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-xl);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .topo-svg {
+    width: 100%;
+    height: auto;
+    max-height: 520px;
+    display: block;
+  }
+  .topo-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 16px 0;
+    border-top: 1px solid var(--border-card);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  /* Pairing Wizard View */
+  .stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    margin-bottom: 24px;
+  }
+  .stepper::before {
+    content: "";
+    position: absolute;
+    top: 16px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background: var(--border-card);
+    z-index: 1;
+  }
+  .step-node {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--border-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+  .step-node.active .step-circle {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .step-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .step-node.active .step-label {
+    color: var(--text-primary);
+  }
+
+  /* Radar Animation */
+  .radar-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    text-align: center;
+  }
+  .radar-circle {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 2px solid rgba(2, 132, 199, 0.25);
+    background: radial-gradient(circle, rgba(2, 132, 199, 0.05) 0%, transparent 70%);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .radar-circle::before {
+    content: "";
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 1px dashed rgba(2, 132, 199, 0.4);
+  }
+  .radar-sweep {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: conic-gradient(from 0deg, transparent 75%, rgba(2, 132, 199, 0.35) 100%);
+    border-radius: 50%;
+    animation: radar-spin 2s linear infinite;
+  }
+  @keyframes radar-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Discovered Node Rows */
+  .found-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .found-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    transition: border-color 0.15s;
+  }
+  .found-card:hover {
+    border-color: var(--accent);
+  }
+  .found-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .signal-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 18px;
+    padding: 2px;
+  }
+  .sig-bar {
+    width: 3.5px;
+    background: var(--border-subtle);
+    border-radius: 1px;
+  }
+  .sig-bar:nth-child(1) { height: 25%; }
+  .sig-bar:nth-child(2) { height: 50%; }
+  .sig-bar:nth-child(3) { height: 75%; }
+  .sig-bar:nth-child(4) { height: 100%; }
+  .signal-bars.sig-4 .sig-bar { background: var(--ok); }
+  .signal-bars.sig-3 .sig-bar:nth-child(-n+3) { background: var(--ok); }
+  .signal-bars.sig-2 .sig-bar:nth-child(-n+2) { background: var(--warn); }
+  .signal-bars.sig-1 .sig-bar:nth-child(1) { background: var(--danger); }
+
+  /* Pairing Modal / Embedded Form */
+  .provision-card {
+    background: var(--accent-light);
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-top: 16px;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .form-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+  }
+  .form-input, .form-select {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    font-size: 13.5px;
+  }
+  .form-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Switch Toggle Component */
+  .toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    user-select: none;
+  }
+  .toggle-label input { position: absolute; opacity: 0; pointer-events: none; }
+  .toggle-switch {
+    width: 40px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--border-subtle);
+    position: relative;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .toggle-switch::after {
+    content: "";
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    transition: transform 0.15s;
+  }
+  .toggle-label input:checked + .toggle-switch {
+    background: var(--accent);
+  }
+  .toggle-label input:checked + .toggle-switch::after {
+    transform: translateX(18px);
+  }
+
+  /* Logs Console View */
+  .logs-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .logs-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 240px;
+  }
+  .log-search-input {
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    font-size: 12.5px;
+    flex: 1;
+  }
+  .log-chips {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .chip-btn {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: var(--bg-card-subtle);
+    color: var(--text-muted);
+  }
+  .chip-btn.active {
+    background: var(--accent);
+    color: #ffffff;
+  }
+  .log-console-box {
+    background: var(--console-bg);
+    color: var(--console-text);
+    border: 1px solid var(--console-border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    height: 520px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.6;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+  }
+  .log-line {
+    white-space: pre-wrap;
+    word-break: break-all;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    padding: 1px 0;
+  }
+  .log-line.log-error { color: #f87171; }
+  .log-line.log-warn { color: #fbbf24; }
+  .log-line.log-info { color: #93c5fd; }
+  .log-line.log-debug { color: #94a3b8; }
+
+  /* Settings View */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .faq-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .faq-item {
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .faq-item summary {
+    padding: 12px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--bg-card-subtle);
+    user-select: none;
+  }
+  .faq-item p {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-card);
+  }
 </style>
 </head>
 <body>
 <div class="shell">
-  <header class="top">
-    <div class="top-row">
-      <div>
-        <h1>Bluetooth Mesh Manager</h1>
-        <p class="sub">Pair, manage, and control your Bluetooth Mesh devices.</p>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m7 7 10 10-5 5V2l5 5L7 17"></path>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1>Bluetooth Mesh <span class="brand-badge">MQTT Bridge</span></h1>
+          <p>Local Bluetooth Mesh lighting & control plane for Home Assistant</p>
+        </div>
       </div>
-      <div class="pills">
-        <span id="mqttstate" class="pill">MQTT</span>
-        <span id="jobstate" class="pill" hidden></span>
+      <div class="status-pills">
+        <div id="mqtt-pill" class="pill" title="MQTT Broker Link">
+          <span class="pill-dot"></span>
+          <span id="mqtt-pill-text">MQTT checking...</span>
+        </div>
+        <div id="gateway-pill" class="pill" title="Gateway Address & IV">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+          </svg>
+          <span id="gateway-pill-text">Gateway: --</span>
+        </div>
+        <div id="job-pill" class="pill busy" style="display:none;">
+          <span class="pill-dot"></span>
+          <span id="job-pill-text">Working...</span>
+        </div>
       </div>
     </div>
-    <div id="notice" class="banner bad" role="alert" hidden><span class="icon">!</span><div><p class="title" id="notice-title"></p><p class="body" id="notice-body"></p></div></div>
-    <div id="job" class="banner warn" role="status" aria-live="polite" hidden></div>
-    <div id="warnings"></div>
+
+    <!-- Active Job Banner -->
+    <div id="job-banner" class="banner warn" style="display:none;" role="status">
+      <div class="banner-content">
+        <span class="spinner"></span>
+        <div>
+          <strong id="job-banner-title">Operation in progress</strong>
+          <span id="job-banner-desc" style="margin-left: 8px; opacity: 0.9;">Please wait...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert / Notice Banner -->
+    <div id="notice-banner" class="banner danger" style="display:none;" role="alert">
+      <div class="banner-content">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <div>
+          <strong id="notice-banner-title">Notice</strong>
+          <span id="notice-banner-desc" style="margin-left: 8px;"></span>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-subtle" onclick="dismissNotice()" style="height:24px; padding:0 8px;">Dismiss</button>
+    </div>
+
+    <!-- Global Navigation Tabs (Zigbee2MQTT style) -->
+    <nav class="tab-nav" role="tablist">
+      <button id="tab-btn-devices" class="tab-btn active" role="tab" onclick="switchTab('devices')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+        </svg>
+        <span>Devices</span>
+        <span id="nav-count-devices" class="tab-badge">0</span>
+      </button>
+
+      <button id="tab-btn-topology" class="tab-btn" role="tab" onclick="switchTab('topology')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="18" cy="5" r="3"></circle>
+          <circle cx="6" cy="12" r="3"></circle>
+          <circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+        </svg>
+        <span>Mesh Topology</span>
+      </button>
+
+      <button id="tab-btn-pair" class="tab-btn" role="tab" onclick="switchTab('pair')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Add Device</span>
+        <span id="nav-count-unpaired" class="tab-badge" style="display:none;">0</span>
+      </button>
+
+      <button id="tab-btn-logs" class="tab-btn" role="tab" onclick="switchTab('logs')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="4 17 10 11 4 5"></polyline>
+          <line x1="12" y1="19" x2="20" y2="19"></line>
+        </svg>
+        <span>Gateway Logs</span>
+      </button>
+
+      <button id="tab-btn-settings" class="tab-btn" role="tab" onclick="switchTab('settings')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Settings</span>
+      </button>
+    </nav>
   </header>
 
   <main>
-    <section aria-labelledby="devices-title">
-      <div class="section-head"><h2 id="devices-title">Your devices</h2><span id="nodecount" class="count"></span></div>
-      <p class="sub">Devices are discovered in Home Assistant through MQTT. Add entities to dashboards from Home Assistant.</p>
-      <div id="nodes" class="devices"></div>
-    </section>
-
-    <section aria-labelledby="network-title">
-      <div class="section-head"><h2 id="network-title">Mesh network</h2><span id="networkcount" class="count"></span></div>
-      <div id="network-note" class="banner info network-note" role="status">
-        <span class="icon">i</span><div><p class="title">Hop distance, not links</p><p class="body">Bluetooth Mesh does not report neighbor links. Run Diagnose on a device to measure its confirmed hop distance and radio settings. Nothing is estimated.</p></div>
-      </div>
-      <div id="network" class="network-grid"></div>
-    </section>
-
-    <section aria-labelledby="add-title">
-      <div class="section-head"><h2 id="add-title">Add a device</h2></div>
-      <div class="card">
-        <ol class="steps">
-          <li><strong>Put the device in pairing mode.</strong> For most bulbs: switch it off and on 3 to 5 times until it blinks or pulses. Check your device manual.</li>
-          <li><strong>Press Scan</strong> and keep the device powered and close to the Home Assistant host (within a few metres) for the whole pairing.</li>
-          <li><strong>Choose the device,</strong> give it a name and press Provision. This can take up to a few minutes. Do not power-cycle the device while it runs.</li>
-        </ol>
-        <div class="add-actions">
-          <button id="scan" class="btn" type="button">Scan for devices (10 s)</button>
-          <span class="count">Only one device can be paired at a time. A device already paired to another app or hub must be factory reset first.</span>
+    <!-- TAB 1: DEVICES -->
+    <section id="panel-devices" class="view-panel active">
+      <div class="devices-header-bar">
+        <div class="devices-stats">
+          <span class="stat-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <span id="stats-total-nodes">0 configured</span>
+          </span>
+          <span class="stat-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 12h20M7 8h10M10 4h4"></path>
+            </svg>
+            <span id="stats-relay-nodes">0 relays active</span>
+          </span>
         </div>
-        <div id="found" class="found" hidden></div>
-        <form id="add" class="provision" hidden>
-          <strong>Pair this device</strong>
-          <div class="mono" id="selected-uuid"></div>
-          <div class="form-grid">
-            <label class="field"><span>Name</span><input name="name" placeholder="Kitchen light" maxlength="80" required autocomplete="off"><small>This becomes the entity name in Home Assistant.</small></label>
-            <label class="field"><span>Device type</span><select name="type" required></select><small>Choose "light" for bulbs and LED drivers. "generic" devices cannot be switched.</small></label>
-            <div class="field"><span>Mesh relay</span>
-              <label class="switch"><input type="checkbox" name="relay"><span class="track"></span>Relay messages</label>
-              <small>Recommended for mains-powered devices: they re-broadcast mesh messages and extend range. Leave off for battery devices.</small></div>
-          </div>
-          <div class="form-actions">
-            <button class="btn" type="submit">Provision device</button>
-            <button id="cancel-add" class="btn ghost" type="button">Cancel</button>
-          </div>
-        </form>
+        <button class="btn btn-primary btn-sm" onclick="switchTab('pair')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add New Device
+        </button>
+      </div>
+
+      <div id="devices-container" class="devices-grid">
+        <!-- Rendered dynamically -->
       </div>
     </section>
 
-    <details class="card">
-      <summary>MQTT connection</summary>
-      <div class="details-body">
-        <form id="mqtt">
-          <div class="mqtt-grid">
-            <label class="field"><span>Broker host</span><input name="broker" placeholder="core-mosquitto"></label>
-            <label class="field"><span>Port</span><input name="port" type="number" min="1" max="65535" placeholder="1883"></label>
-            <label class="field"><span>Username</span><input name="username" autocomplete="username"></label>
-            <label class="field"><span>Password</span><input name="password" type="password" autocomplete="new-password" placeholder="Leave blank to keep"></label>
+    <!-- TAB 2: MESH TOPOLOGY -->
+    <section id="panel-topology" class="view-panel">
+      <div class="topo-header">
+        <div class="topo-stats">
+          <span class="stat-pill"><strong id="topo-node-count">0</strong> nodes</span>
+          <span class="stat-pill"><strong id="topo-relay-count">0</strong> relays</span>
+          <span class="stat-pill"><strong id="topo-avg-rtt">--</strong> avg round-trip</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-subtle btn-sm" onclick="runDiagnoseAll()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Diagnose All
+          </button>
+        </div>
+      </div>
+
+      <div class="topo-canvas-card">
+        <svg id="topo-svg-element" class="topo-svg" viewBox="0 0 840 440">
+          <!-- Dynamically generated SVG graph -->
+        </svg>
+        <div class="topo-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#0284c7;"></span> Home Assistant Gateway</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span> Direct Link (1 Hop)</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> Multi-Hop (2+ Hops)</div>
+          <div class="legend-item"><span class="legend-dot" style="border:2px solid #38bdf8; background:transparent;"></span> Relay Repeater</div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;" class="card">
+        <div class="card-body" style="padding:14px 18px; font-size:12.5px; color:var(--text-muted); display:flex; align-items:center; gap:12px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <div>
+            <strong>How Bluetooth Mesh Topology Works:</strong> Bluetooth Mesh uses managed flooding. It does not maintain fixed point-to-point routing tables. Running <em>Diagnose</em> measures confirmed packet round-trip time (RTT) and hop counts across your relay nodes.
           </div>
-          <div class="form-actions" style="margin-top:14px"><button class="btn" type="submit">Save and reconnect</button><span id="mqttinfo" class="count"></span></div>
-        </form>
+        </div>
       </div>
-    </details>
+    </section>
 
-    <details class="card">
-      <summary>Help and troubleshooting</summary>
-      <div class="details-body">
-        <ul class="help-list">
-          <li><strong>The light does not show up in Home Assistant:</strong> check that the MQTT pill above is green, the MQTT integration is set up in Home Assistant, and search the Entities page for the device name.</li>
-          <li><strong>Scan finds nothing:</strong> the device must be in pairing mode during the scan. Move it closer to the host and scan again.</li>
-          <li><strong>Pairing fails:</strong> factory reset the device, put it in pairing mode right before pressing Provision and try again. Open the log below for the exact reason.</li>
-          <li><strong>Raspberry Pi onboard Bluetooth:</strong> set the add-on option <em>io</em> to <em>generic</em>.</li>
-          <li><strong>Removing a device:</strong> Remove resets the device and forgets it. If the device is unreachable, use Force remove, then factory reset it manually.</li>
-          <li><strong>Pairing data</strong> is stored in the add-on data folder and survives updates. Back it up with your Home Assistant backups.</li>
-        </ul>
+    <!-- TAB 3: ADD DEVICE (PAIRING WIZARD) -->
+    <section id="panel-pair" class="view-panel">
+      <div class="card" style="max-width:760px; margin:0 auto;">
+        <div class="card-header">
+          <h2>Pairing Wizard</h2>
+          <span class="tag">Bluetooth Mesh 1.0</span>
+        </div>
+        <div class="card-body">
+          <div class="stepper">
+            <div id="step-1" class="step-node active">
+              <div class="step-circle">1</div>
+              <span class="step-label">Prepare</span>
+            </div>
+            <div id="step-2" class="step-node">
+              <div class="step-circle">2</div>
+              <span class="step-label">Scan</span>
+            </div>
+            <div id="step-3" class="step-node">
+              <div class="step-circle">3</div>
+              <span class="step-label">Provision</span>
+            </div>
+          </div>
+
+          <div id="prepare-guide" class="prepare-box" style="margin-bottom:20px;">
+            <div style="background:var(--bg-card-subtle); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-card);">
+              <h4 style="font-size:14px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                Put Device in Pairing Mode
+              </h4>
+              <p style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;">
+                For most mesh smart bulbs or LED controllers: turn the power switch <strong>OFF and ON 3 to 5 times</strong> until the light begins blinking or pulsing rapidly.
+              </p>
+              <p style="font-size:12.5px; color:var(--text-muted);">
+                💡 Keep the unprovisioned device within 2–3 meters of the Home Assistant host during the initial pairing handshake.
+              </p>
+            </div>
+          </div>
+
+          <div class="radar-box">
+            <div id="radar-visual" class="radar-circle">
+              <div class="radar-sweep" id="radar-spinner" style="display:none;"></div>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8">
+                <path d="M4.93 4.93a10 10 0 0 1 14.14 0"></path>
+                <path d="M7.76 7.76a6 6 0 0 1 8.48 0"></path>
+                <circle cx="12" cy="12" r="2"></circle>
+              </svg>
+            </div>
+
+            <button id="scan-trigger-btn" class="btn btn-primary" onclick="startScan()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span id="scan-btn-text">Start Discovery Scan (10s)</span>
+            </button>
+            <p id="scan-status-text" style="font-size:12.5px; color:var(--text-muted); margin-top:10px;">
+              Listening for unprovisioned Bluetooth Mesh beacons...
+            </p>
+          </div>
+
+          <!-- Found Devices Container -->
+          <div id="found-devices-container" class="found-list" style="display:none;">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Provisioning Setup Form -->
+          <div id="provision-form-box" class="provision-card" style="display:none;">
+            <h3 style="font-size:15px; font-weight:700; margin-bottom:4px;">Provision Discovered Device</h3>
+            <p style="font-size:12px; font-family:var(--font-mono); color:var(--text-secondary);" id="provision-uuid-label"></p>
+
+            <form id="provision-form" onsubmit="submitProvision(event)">
+              <input type="hidden" name="uuid" id="form-prov-uuid">
+              <div class="form-row">
+                <div class="form-field">
+                  <label class="form-label">Friendly Device Name</label>
+                  <input class="form-input" name="name" id="form-prov-name" placeholder="Living Room Lamp" required maxlength="80" autocomplete="off">
+                  <span class="form-hint">Used as entity name in Home Assistant.</span>
+                </div>
+                <div class="form-field">
+                  <label class="form-label">Device Type</label>
+                  <select class="form-select" name="type" id="form-prov-type" required>
+                    <!-- Options populated from state.node_types -->
+                  </select>
+                  <span class="form-hint">Choose "light" for bulbs, dimmers and tunable drivers.</span>
+                </div>
+                <div class="form-field" style="justify-content:center;">
+                  <label class="form-label">Mesh Relay Function</label>
+                  <label class="toggle-label" style="margin-top:6px;">
+                    <input type="checkbox" name="relay" id="form-prov-relay" checked>
+                    <span class="toggle-switch"></span>
+                    <span>Enable Mesh Relay</span>
+                  </label>
+                  <span class="form-hint">Recommended for mains-powered devices to extend range.</span>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:10px; align-items:center;">
+                <button type="submit" class="btn btn-primary" id="btn-submit-provision">
+                  Provision into Mesh
+                </button>
+                <button type="button" class="btn btn-subtle" onclick="cancelProvision()">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
-    </details>
+    </section>
 
-    <details class="card">
-      <summary>Gateway log</summary>
-      <div class="details-body"><div class="form-actions" style="margin-top:14px"><button id="copylog" class="btn ghost small" type="button">Copy log</button></div><pre id="log"></pre></div>
-    </details>
+    <!-- TAB 4: LOGS & CONSOLE -->
+    <section id="panel-logs" class="view-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="logs-toolbar" style="width:100%;">
+            <div class="logs-filters">
+              <input type="text" id="log-search" class="log-search-input" placeholder="Search logs (regex or text)..." oninput="filterLogs()">
+              <div class="log-chips">
+                <button class="chip-btn active" onclick="setLogFilter('all', this)">All</button>
+                <button class="chip-btn" onclick="setLogFilter('error', this)">Error</button>
+                <button class="chip-btn" onclick="setLogFilter('warn', this)">Warn</button>
+                <button class="chip-btn" onclick="setLogFilter('info', this)">Info</button>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <label class="toggle-label" style="font-size:12px; font-weight:500;">
+                <input type="checkbox" id="log-autoscroll" checked>
+                <span class="toggle-switch" style="width:32px; height:18px;"></span>
+                <span>Auto-scroll</span>
+              </label>
+              <button class="btn btn-subtle btn-sm" onclick="copyLogs()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span id="copy-log-btn-text">Copy</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body" style="padding:12px;">
+          <div id="log-console" class="log-console-box">
+            <!-- Dynamically populated lines -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: SETTINGS & MQTT -->
+    <section id="panel-settings" class="view-panel">
+      <div class="settings-grid">
+        <!-- MQTT Settings Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2>MQTT Broker Configuration</h2>
+            <span id="mqtt-settings-status" class="tag">Checking</span>
+          </div>
+          <div class="card-body">
+            <form id="mqtt-form" onsubmit="saveMqtt(event)">
+              <div class="form-field" style="margin-bottom:12px;">
+                <label class="form-label">Broker Host</label>
+                <input class="form-input" name="broker" id="mqtt-broker" placeholder="core-mosquitto">
+              </div>
+              <div class="form-field" style="margin-bottom:12px;">
+                <label class="form-label">Port</label>
+                <input class="form-input" name="port" id="mqtt-port" type="number" min="1" max="65535" placeholder="1883">
+              </div>
+              <div class="form-field" style="margin-bottom:12px;">
+                <label class="form-label">Username</label>
+                <input class="form-input" name="username" id="mqtt-username" autocomplete="username">
+              </div>
+              <div class="form-field" style="margin-bottom:16px;">
+                <label class="form-label">Password</label>
+                <input class="form-input" name="password" id="mqtt-password" type="password" autocomplete="new-password" placeholder="Leave blank to preserve saved password">
+                <span class="form-hint" id="mqtt-pass-status">No password saved.</span>
+              </div>
+              <button type="submit" class="btn btn-primary" id="btn-save-mqtt">
+                Save & Reconnect Broker
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Gateway Diagnostics & FAQ -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Gateway Mesh Parameters</h2>
+          </div>
+          <div class="card-body">
+            <div class="tech-grid" style="margin-bottom:16px;">
+              <div class="metric-card">
+                <span class="metric-label">Gateway Unicast</span>
+                <span class="metric-val" id="gw-unicast-val">0x0001 (1)</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">IV Index</span>
+                <span class="metric-val" id="gw-iv-val">0</span>
+              </div>
+            </div>
+
+            <h3 style="font-size:14px; font-weight:700; margin-top:14px;">Troubleshooting & Guides</h3>
+            <div class="faq-accordion">
+              <details class="faq-item">
+                <summary>Devices not appearing in Home Assistant</summary>
+                <p>Verify that the MQTT pill in the top header is green (Online). Home Assistant automatically discovers devices through MQTT discovery under the <code>homeassistant/light/</code> topic. Check the Entities page in HA Settings.</p>
+              </details>
+              <details class="faq-item">
+                <summary>How to reset and re-pair a bulb</summary>
+                <p>Turn the light off and on 3 to 5 times (approx. 1 second per toggle). The bulb will flash rapidly or pulse to indicate factory reset mode. Run scan in the Add Device tab immediately.</p>
+              </details>
+              <details class="faq-item">
+                <summary>Raspberry Pi 4 Bluetooth controller advice</summary>
+                <p>The onboard Raspberry Pi 4 Broadcom chip has known BlueZ packet transmission constraints. Ensure your add-on option <em>io</em> is configured to <em>generic</em> if needed.</p>
+              </details>
+              <details class="faq-item">
+                <summary>Mesh relay best practices</summary>
+                <p>Mains-powered bulbs and LED drivers make excellent mesh repeaters. Battery-powered sensors or remotes should always have relay disabled to conserve power.</p>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
-  <footer>Open source. See the project README for setup, options and limitations.</footer>
 </div>
 
 <script>
-// relative URLs keep this working behind the Home Assistant ingress path prefix
+// State management
+let currentState = null;
+let currentLogs = [];
+let activeTab = 'devices';
+let openTechDrawers = new Set();
+let renamingNodes = new Map();
+let logFilter = 'all';
+let isBusy = false;
+let mqttFormLoaded = false;
+let nodeTypesLoaded = false;
+
+// Helpers
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
 async function api(method, path, body) {
   const res = await fetch(path, {
     method,
@@ -271,330 +1573,764 @@ async function api(method, path, body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   let data = {};
-  try { data = await res.json(); } catch (e) { throw new Error("The add-on is not reachable yet. Try again in a few seconds."); }
+  try { data = await res.json(); } catch(e) {
+    throw new Error("Add-on API not reachable. Try again shortly.");
+  }
   if (!res.ok) throw new Error(data.error || res.statusText);
   return data;
 }
 
-const $ = (s) => document.querySelector(s);
-function el(tag, props = {}, ...children) {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
+let noticeTimeout = null;
+function showNotice(title, desc = "") {
+  if (noticeTimeout) clearTimeout(noticeTimeout);
+  const b = $("#notice-banner");
+  b.style.display = title ? "flex" : "none";
+  $("#notice-banner-title").textContent = title;
+  $("#notice-banner-desc").textContent = desc;
+  if (title) {
+    noticeTimeout = setTimeout(dismissNotice, 7000);
+  }
 }
 
-let mqttLoaded = false;
-let typesLoaded = false;
-let busy = false;
-let lastState = null;
-
-function notify(title, body = "") {
-  $("#notice").hidden = !title;
-  $("#notice-title").textContent = title;
-  $("#notice-body").textContent = body;
+function dismissNotice() {
+  $("#notice-banner").style.display = "none";
 }
 
 async function runAction(action) {
-  try { await action(); notify(""); await refresh(); }
-  catch (error) { notify("That did not work", error.message); }
+  try {
+    dismissNotice();
+    await action();
+    await refresh();
+  } catch (err) {
+    showNotice("Action failed", err.message);
+  }
 }
 
-function banner(kind, icon, title, body) {
-  const b = el("div", { className: `banner ${kind}` },
-    el("span", { className: "icon" }, icon),
-    el("div", {}, el("p", { className: "title" }, title), el("p", { className: "body" }, body)));
-  return b;
+// Navigation Tabs
+function switchTab(tabId) {
+  activeTab = tabId;
+  $$(".tab-btn").forEach(b => b.classList.remove("active"));
+  const btn = $(`#tab-btn-${tabId}`);
+  if (btn) btn.classList.add("active");
+
+  $$(".view-panel").forEach(p => p.classList.remove("active"));
+  const panel = $(`#panel-${tabId}`);
+  if (panel) panel.classList.add("active");
+
+  if (tabId === 'topology' && currentState) {
+    renderTopology(currentState);
+  }
+  if (tabId === 'logs') {
+    filterLogs();
+  }
 }
 
-const JOB_LABELS = {
-  scan: "Scanning for nearby devices",
-  provision: "Pairing the device. This can take a few minutes, keep it powered and in pairing mode",
-  configure: "Configuring the device",
-  power: "Sending command",
-  brightness: "Setting brightness",
-  color_temperature: "Setting color temperature",
-  rename: "Updating device name",
-  type: "Changing device type",
-  relay: "Updating relay setting",
-  diagnose: "Running diagnostics (about 30 seconds)",
-  remove: "Removing the device",
+const JOB_DESCRIPTIONS = {
+  scan: "Scanning for nearby Bluetooth Mesh devices (10s)",
+  provision: "Provisioning device into the mesh. Please keep device powered",
+  configure: "Binding application keys and models to device",
+  power: "Transmitting power command",
+  brightness: "Setting brightness level",
+  color_temperature: "Adjusting color temperature",
+  rename: "Saving friendly name",
+  type: "Updating node type",
+  relay: "Updating mesh relay configuration",
+  diagnose: "Measuring confirmed RTT latency and hop distance",
+  remove: "Removing node from mesh",
 };
 
-function renderJob(job) {
-  const box = $("#job");
-  const pill = $("#jobstate");
-  if (job.state === "running") {
-    box.hidden = false;
-    box.className = "banner warn";
-    box.replaceChildren(el("span", { className: "spinner" }),
-      el("div", {}, el("p", { className: "title" }, JOB_LABELS[job.name] || `Running ${job.name}`), el("p", { className: "body" }, "Please wait. You can leave this page open.")));
-    pill.hidden = false; pill.className = "pill busy"; pill.textContent = "Working";
-  } else if (job.state === "error") {
-    box.hidden = false;
-    box.className = "banner bad";
-    box.replaceChildren(el("span", { className: "icon" }, "!"),
-      el("div", {}, el("p", { className: "title" }, `${JOB_LABELS[job.name] ? job.name : job.name} failed`),
-        el("p", { className: "body" }, `${job.message} See the Gateway log below for details.`)));
-    pill.hidden = true;
+function renderJobAndPills(state) {
+  // MQTT pill
+  const mqPill = $("#mqtt-pill");
+  const mqText = $("#mqtt-pill-text");
+  if (state.mqtt.connected) {
+    mqPill.className = "pill online";
+    mqText.textContent = `MQTT: ${state.mqtt.broker || "Connected"}`;
   } else {
-    box.hidden = true;
-    pill.hidden = true;
+    mqPill.className = "pill";
+    mqText.textContent = "MQTT Disconnected";
+  }
+
+  // Gateway pill
+  if (state.gateway) {
+    $("#gateway-pill-text").textContent = `GW 0x${(state.gateway.address || 1).toString(16).padStart(4, '0')} · IV ${state.gateway.iv_index ?? 0}`;
+  }
+
+  // Job status
+  const job = state.job || {};
+  const jobPill = $("#job-pill");
+  const jobBanner = $("#job-banner");
+
+  if (job.state === "running") {
+    jobPill.style.display = "inline-flex";
+    jobBanner.style.display = "flex";
+    jobBanner.className = "banner warn";
+    $("#job-banner-title").textContent = JOB_DESCRIPTIONS[job.name] || `Running ${job.name}`;
+    $("#job-banner-desc").textContent = "You can navigate tabs while operation completes.";
+  } else if (job.state === "error") {
+    jobPill.style.display = "none";
+    jobBanner.style.display = "flex";
+    jobBanner.className = "banner danger";
+    $("#job-banner-title").textContent = `Operation ${job.name} failed`;
+    $("#job-banner-desc").textContent = job.message || "Check Gateway Logs for details.";
+  } else {
+    jobPill.style.display = "none";
+    jobBanner.style.display = "none";
+  }
+
+  // Nav badges
+  $("#nav-count-devices").textContent = state.nodes.length;
+  const unpairedCount = state.unprovisioned ? state.unprovisioned.length : 0;
+  const unpairBadge = $("#nav-count-unpaired");
+  if (unpairedCount > 0) {
+    unpairBadge.style.display = "inline-block";
+    unpairBadge.textContent = unpairedCount;
+  } else {
+    unpairBadge.style.display = "none";
   }
 }
 
-function renderWarnings(state) {
-  const w = $("#warnings");
-  w.replaceChildren();
-  if (!state.mqtt.connected) {
-    w.append(banner("bad", "!", "MQTT is not connected",
-      "Lights cannot appear in Home Assistant until the add-on connects to your MQTT broker. Open MQTT connection below and check the host, port and credentials."));
-  }
-  if (state.nodes.some((n) => n.type === "generic")) {
-    w.append(banner("warn", "!", "Some devices are type \"generic\"",
-      "Generic devices cannot be switched and are not exposed to Home Assistant. Change their type to \"light\" in the device card."));
-  }
-  if (state.nodes.length && state.nodes.every((n) => !n.relay)) {
-    w.append(banner("info", "i", "Tip: enable Mesh relay on mains-powered devices",
-      "With relay off, each device only talks directly to this host. Turning it on for always-powered lights extends range. Enable it in the device card."));
-  }
-}
+// Render Devices View
+function renderDevices(state) {
+  const container = $("#devices-container");
+  const nodes = state.nodes || [];
+  const running = state.job && state.job.state === "running";
 
-function renderDevice(n, types, running) {
-  const card = el("div", { className: "card device" });
+  $("#stats-total-nodes").textContent = `${nodes.length} ${nodes.length === 1 ? "device" : "devices"}`;
+  const relayCount = nodes.filter(n => n.relay).length;
+  $("#stats-relay-nodes").textContent = `${relayCount} ${relayCount === 1 ? "relay" : "relays"} active`;
 
-  const state = el("span", { className: `badge${n.ready ? " ready" : ""}` },
-    n.ready ? "Ready" : n.configured ? "Starting" : "Needs configuring");
-  const head = el("div", { className: "device-top" },
-    el("div", { className: "device-id" },
-      el("div", { className: "bulb", "aria-hidden": "true" }, "💡"),
-      el("div", {}, el("h3", { className: "device-name" }, n.name || n.id || "Unnamed device"), state)),
-    el("div", { className: "seg", role: "group", "aria-label": `Power for ${n.name || n.id}` },
-      el("button", { type: "button", className: n.on === true ? "on" : "", textContent: "On", disabled: running || !n.supports_onoff, onclick: () => runAction(() => api("POST", `api/nodes/${n.uuid}/power`, { on: true })) }),
-      el("button", { type: "button", className: n.on === false ? "on" : "", textContent: "Off", disabled: running || !n.supports_onoff, onclick: () => runAction(() => api("POST", `api/nodes/${n.uuid}/power`, { on: false })) })));
-
-  const typeSelect = el("select", { disabled: running, "aria-label": "Device type" });
-  for (const t of types) typeSelect.add(new Option(t, t));
-  typeSelect.value = n.type;
-  typeSelect.onchange = () => runAction(() => api("POST", `api/nodes/${n.uuid}/type`, { type: typeSelect.value }));
-
-  const relay = el("input", { type: "checkbox", checked: n.relay, disabled: running });
-  relay.onchange = () => runAction(() => api("POST", `api/nodes/${n.uuid}/relay`, { relay: relay.checked }));
-
-  const opts = el("div", { className: "device-opts" },
-    el("div", { className: "opt" }, el("label", { className: "lbl" }, "Type"), typeSelect,
-      el("p", { className: "hint" }, "Use \"light\" for bulbs and LED drivers.")),
-    el("div", { className: "opt" }, el("label", { className: "lbl" }, "Mesh relay"),
-      el("label", { className: "switch" }, relay, el("span", { className: "track" }), "Relay messages"),
-      el("p", { className: "hint" }, "Turn on for mains-powered devices to extend range. Leave off for battery devices.")));
-  if (n.supports_brightness) {
-    const brightness = el("input", { className: "range-input", type: "range", min: "0", max: "100", step: "1",
-      value: String(n.brightness ?? 100), disabled: running, "aria-label": `Brightness for ${n.name || n.id}` });
-    const brightnessValue = el("span", { className: "range-value" }, `${brightness.value}%`);
-    brightness.oninput = () => { brightnessValue.textContent = `${brightness.value}%`; };
-    brightness.onchange = () => runAction(() => api("POST", `api/nodes/${n.uuid}/brightness`, { brightness: Number(brightness.value) }));
-    opts.append(el("div", { className: "opt" },
-      el("label", { className: "lbl" }, "Brightness", brightnessValue), brightness,
-      el("p", { className: "hint" }, "Adjust the light output.")));
-  }
-  if (n.supports_temperature) {
-    const temperature = el("input", { className: "range-input", type: "range", min: "50", max: "1250", step: "1",
-      value: String(n.color_temp ?? 250), disabled: running, "aria-label": `Color temperature for ${n.name || n.id}` });
-    const temperatureValue = el("span", { className: "range-value" }, `${Math.round(1000000 / Number(temperature.value))} K`);
-    temperature.oninput = () => { temperatureValue.textContent = `${Math.round(1000000 / Number(temperature.value))} K`; };
-    temperature.onchange = () => runAction(() => api("POST", `api/nodes/${n.uuid}/color-temperature`, { mireds: Number(temperature.value) }));
-    opts.append(el("div", { className: "opt" },
-      el("label", { className: "lbl" }, "Color temperature", temperatureValue), temperature,
-      el("p", { className: "hint" }, "Cooler at the left, warmer at the right.")));
-  }
-
-  const renameInput = el("input", { name: "name", value: n.name || n.id || "", maxLength: "80", required: true,
-    "aria-label": `Name for ${n.name || n.id}` });
-  const renameForm = el("form", { className: "rename-form" },
-    el("label", {}, "Device name", renameInput),
-    el("button", { type: "submit", className: "btn ghost small", textContent: "Save name", disabled: running }));
-  renameForm.onsubmit = (event) => {
-    event.preventDefault();
-    runAction(() => api("PUT", `api/nodes/${n.uuid}/name`, { name: renameInput.value }));
-  };
-
-  const removeBtn = el("button", { type: "button", className: "btn danger small", textContent: "Remove", disabled: running,
-    onclick: () => confirm(`Reset and remove "${n.name || n.id}"? The device will need to be paired again.`) &&
-      runAction(() => api("DELETE", `api/nodes/${n.uuid}`)) });
-  const forceBtn = el("button", { type: "button", className: "btn danger small", textContent: "Force remove", disabled: running,
-    title: "Forget the device without contacting it. Factory reset it manually afterwards.",
-    onclick: () => confirm(`Force remove "${n.name || n.id}" without resetting it? Factory reset the device manually afterwards.`) &&
-      runAction(() => api("DELETE", `api/nodes/${n.uuid}?force=1`)) });
-  const foot = el("div", { className: "device-foot" },
-    el("div", { className: "mono" }, `Mesh address ${n.unicast}  ·  ${n.uuid}`),
-    el("div", { className: "links" },
-      el("button", { type: "button", className: "btn ghost small", textContent: "Reconfigure", disabled: running,
-        title: "Re-send keys and settings to the device",
-        onclick: () => runAction(() => api("POST", `api/nodes/${n.uuid}/configure`)) }),
-      removeBtn, forceBtn));
-
-  card.append(head, opts, renameForm, foot);
-  return card;
-}
-
-function diagLines(d) {
-  if (!d) return "Not diagnosed yet.";
-  const p = d.probes || {};
-  const v = (k) => (p[k] && p[k].ok ? p[k].value : null);
-  const rtt = (k) => (p[k] && p[k].ok ? `${p[k].rtt_ms} ms` : "n/a");
-  const tx = v("network_transmit");
-  const rl = v("relay");
-  const lines = [
-    `Hops to gateway: ${d.hops ?? "unknown"}${v("hops") ? ` (min ${v("hops").min_hops})` : ""}`,
-    `Config round trip: ${rtt("default_ttl")}`,
-    `Default TTL: ${v("default_ttl") ? v("default_ttl").TTL ?? JSON.stringify(v("default_ttl")) : "n/a"}`,
-    `Network transmit: ${tx ? JSON.stringify(tx) : "n/a"}`,
-    `Relay: ${rl ? JSON.stringify(rl) : "n/a"}`,
-    `Checked: ${new Date(d.at * 1000).toLocaleTimeString()}`,
-  ];
-  return lines.join("\n");
-}
-
-function renderNetwork(state) {
-  const network = $("#network");
-  network.replaceChildren();
-  $("#networkcount").textContent = `${state.nodes.length} ${state.nodes.length === 1 ? "device" : "devices"}`;
-  if (!state.nodes.length) {
-    network.append(el("div", { className: "card empty" }, el("strong", {}, "No mesh devices yet"), "Pair a device to see it in the network overview."));
+  if (!nodes.length) {
+    container.innerHTML = `
+      <div class="card empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"></path>
+          </svg>
+        </div>
+        <h3>No Bluetooth Mesh Devices Configured</h3>
+        <p>Your mesh network is ready. Put your smart bulb into pairing mode and launch discovery.</p>
+        <button class="btn btn-primary" onclick="switchTab('pair')">Pair First Device</button>
+      </div>
+    `;
     return;
   }
-  for (const n of state.nodes) {
-    network.append(el("article", { className: "card network-node" },
-      el("h3", {}, n.name || n.id || "Unnamed device"),
-      el("p", { className: `badge${n.ready ? " ready" : ""}` }, n.ready ? "Ready" : n.configured ? "Starting" : "Needs configuring"),
-      el("p", { className: "mono" }, `Address ${n.unicast} · ${n.type}`),
-      el("p", { className: "count" }, `Relay ${n.relay ? "enabled" : "disabled"} · Hops: ${n.diagnostics && n.diagnostics.hops != null ? n.diagnostics.hops : "unknown"}`),
-      el("pre", { className: "mono", textContent: diagLines(n.diagnostics) }),
-      el("button", { type: "button", className: "btn ghost small", textContent: "Diagnose", disabled: running,
-        onclick: () => runAction(() => api("POST", `api/nodes/${n.uuid}/diagnose`, {})) }),
-      el("details", {}, el("summary", {}, "Raw debug data"),
-        el("pre", { className: "mono", textContent: JSON.stringify(n.diagnostics || {}, null, 2) }))));
-  }
-}
 
-function renderNodes(state, running) {
-  const nodes = $("#nodes");
-  nodes.replaceChildren();
-  $("#nodecount").textContent = state.nodes.length ? `${state.nodes.length} ${state.nodes.length === 1 ? "device" : "devices"}` : "";
-  if (!state.nodes.length) {
-    nodes.append(el("div", { className: "card empty" }, el("strong", {}, "No devices yet"), "Follow the steps in Add a device below to pair your first light."));
+  // Avoid rerendering if user is typing in a rename input or slider
+  const activeEl = document.activeElement;
+  if (activeEl && container.contains(activeEl) && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT')) {
     return;
   }
-  for (const n of state.nodes) nodes.append(renderDevice(n, state.node_types, running));
-}
 
-function renderFound(state, running) {
-  const found = $("#found");
-  const scanRunning = running && state.job.name === "scan";
-  $("#scan").disabled = running;
-  $("#scan").textContent = scanRunning ? "Scanning..." : "Scan for devices (10 s)";
-  found.replaceChildren();
-  found.hidden = !state.unprovisioned.length && !scanRunning;
-  if (scanRunning && !state.unprovisioned.length) {
-    found.append(el("div", { className: "empty" }, "Listening for nearby devices in pairing mode..."));
-  }
-  for (const uuid of state.unprovisioned) {
-    found.append(el("div", { className: "found-row" },
-      el("div", {}, el("strong", {}, "Unpaired mesh device"), el("div", { className: "mono" }, uuid),
-        el("div", { className: "count" }, state.scan_rssi && state.scan_rssi[uuid] != null ? `Signal ${state.scan_rssi[uuid]} dBm` : "")),
-      el("button", { type: "button", className: "btn small", textContent: "Pair this device", disabled: running, onclick: () => {
-        const f = $("#add");
-        f.hidden = false;
-        f.uuid.value = uuid;
-        $("#selected-uuid").textContent = uuid;
-        f.name.focus();
-        notify("");
-      } })));
-  }
-  if (!found.hidden && !state.unprovisioned.length && !scanRunning) found.hidden = true;
-}
+  container.innerHTML = "";
+  nodes.forEach(node => {
+    const isLight = node.type === "light";
+    const isOn = node.on === true;
+    const isTechOpen = openTechDrawers.has(node.uuid);
+    const isRenaming = renamingNodes.has(node.uuid);
 
-function render(state) {
-  lastState = state;
-  const running = state.job.state === "running";
+    const card = document.createElement("div");
+    card.className = `device-card ${isOn ? "is-on" : ""}`;
+    card.id = `node-card-${node.uuid}`;
 
-  const mq = $("#mqttstate");
-  mq.textContent = state.mqtt.connected ? "MQTT connected" : "MQTT disconnected";
-  mq.classList.toggle("good", state.mqtt.connected);
+    const diag = node.diagnostics || {};
+    const probes = diag.probes || {};
+    const rttVal = (probes.default_ttl && probes.default_ttl.ok) ? probes.default_ttl.rtt_ms : null;
+    const hopsVal = diag.hops != null ? diag.hops : (probes.hops && probes.hops.ok && probes.hops.value ? probes.hops.value.min_hops : null);
 
-  renderJob(state.job);
-  renderWarnings(state);
-  renderNetwork(state);
-
-  // do not rebuild the device list while the user is interacting with a control inside it
-  if (!document.activeElement || !$("#nodes").contains(document.activeElement)) renderNodes(state, running);
-  renderFound(state, running);
-
-  if (!typesLoaded) {
-    const types = $("#add select");
-    for (const t of [...state.node_types].sort((a, b) => (b === "light") - (a === "light"))) types.add(new Option(t, t));
-    typesLoaded = true;
-  }
-  if (!mqttLoaded) {
-    const m = $("#mqtt");
-    m.broker.value = state.mqtt.broker;
-    m.port.value = state.mqtt.port;
-    m.username.value = state.mqtt.username;
-    mqttLoaded = true;
-  }
-  $("#mqttinfo").textContent = state.mqtt.password_set ? "A password is saved." : "No password saved.";
-}
-
-async function refresh() {
-  if (busy) return;
-  busy = true;
-  try {
-    const res = await fetch("api/state");
-    if (res.ok) render(await res.json());
-    const logs = await fetch("api/logs");
-    if (logs.ok) {
-      const pre = $("#log");
-      const stick = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 20;
-      pre.textContent = (await logs.json()).join("\n");
-      if (stick) pre.scrollTop = pre.scrollHeight;
+    let rttSpeedClass = "fast";
+    if (rttVal !== null) {
+      if (rttVal > 2500) rttSpeedClass = "slow";
+      else if (rttVal > 1200) rttSpeedClass = "normal";
     }
-  } catch (e) { /* retry on next tick */ }
-  finally { busy = false; }
+
+    const rttFormatted = rttVal !== null ? `${rttVal} ms` : "Not measured";
+    const hopsFormatted = hopsVal !== null ? (hopsVal === 1 ? "1 Hop (Direct)" : `${hopsVal} Hops`) : "Unknown";
+
+    card.innerHTML = `
+      <div class="device-card-glow"></div>
+      <div class="device-card-head">
+        <div class="device-identity">
+          <div class="device-avatar" title="${isLight ? 'Smart Light' : 'Generic Device'}">
+            ${isLight ? '💡' : '🎛️'}
+          </div>
+          <div class="device-meta">
+            ${!isRenaming ? `
+              <div class="device-name-row">
+                <span class="device-title" title="${node.name || node.id || 'Unnamed'}">${node.name || node.id || 'Unnamed Device'}</span>
+                <button class="btn btn-sm btn-icon-only btn-subtle" title="Rename device" onclick="startRename('${node.uuid}', '${node.name || node.id || ''}')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+              </div>
+            ` : `
+              <div class="rename-box">
+                <input class="rename-input" id="rename-input-${node.uuid}" value="${renamingNodes.get(node.uuid)}" maxlength="80">
+                <button class="btn btn-sm btn-primary" onclick="saveRename('${node.uuid}')">Save</button>
+                <button class="btn btn-sm btn-subtle" onclick="cancelRename('${node.uuid}')">Cancel</button>
+              </div>
+            `}
+            <div class="device-tags">
+              <span class="tag ${node.ready ? 'ready' : ''}">${node.ready ? 'Online' : (node.configured ? 'Starting' : 'Configuring')}</span>
+              <span class="tag">Addr ${node.unicast}</span>
+              ${node.relay ? '<span class="tag relay">Relay Active</span>' : ''}
+            </div>
+          </div>
+        </div>
+
+        ${node.supports_onoff ? `
+          <div class="power-switch-group">
+            <button class="power-btn ${isOn ? 'active-on' : ''}" ${running ? 'disabled' : ''} onclick="setPower('${node.uuid}', true)">ON</button>
+            <button class="power-btn ${node.on === false ? 'active-off' : ''}" ${running ? 'disabled' : ''} onclick="setPower('${node.uuid}', false)">OFF</button>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="device-card-controls">
+        ${node.supports_brightness ? `
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Brightness</span>
+              <span class="control-value-pill" id="val-b-${node.uuid}">${node.brightness || 100}%</span>
+            </div>
+            <div class="slider-wrapper">
+              <input type="range" class="custom-slider" min="1" max="100" value="${node.brightness || 100}"
+                ${running ? 'disabled' : ''}
+                oninput="$('#val-b-${node.uuid}').textContent = this.value + '%'"
+                onchange="setBrightness('${node.uuid}', this.value)">
+            </div>
+          </div>
+        ` : ''}
+
+        ${node.supports_temperature ? `
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Color Temperature</span>
+              <span class="control-value-pill" id="val-t-${node.uuid}">${Math.round(1000000 / (node.color_temp || 250))} K</span>
+            </div>
+            <div class="slider-wrapper">
+              <input type="range" class="custom-slider slider-temp" min="50" max="1250" value="${node.color_temp || 250}"
+                ${running ? 'disabled' : ''}
+                oninput="$('#val-t-${node.uuid}').textContent = Math.round(1000000 / this.value) + ' K'"
+                onchange="setColorTemp('${node.uuid}', this.value)">
+            </div>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="device-card-foot">
+        <span style="font-family:var(--font-mono); color:var(--text-muted); font-size:11px;" title="UUID: ${node.uuid}">
+          ${hopsFormatted} · ${rttFormatted}
+        </span>
+        <button class="tech-specs-btn" onclick="toggleTechDrawer('${node.uuid}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span>${isTechOpen ? 'Hide Specs' : 'Tech Specs'}</span>
+        </button>
+      </div>
+
+      ${isTechOpen ? `
+        <div class="tech-drawer">
+          <div class="tech-grid">
+            <div class="metric-card">
+              <span class="metric-label">Latency (RTT)</span>
+              <span class="metric-val ${rttSpeedClass}">${rttFormatted}</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Hop Distance</span>
+              <span class="metric-val">${hopsFormatted}</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Default TTL</span>
+              <span class="metric-val">${formatTtl(probes.default_ttl)}</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Network Transmit</span>
+              <span class="metric-val">${formatTransmit(probes.network_transmit)}</span>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:4px 0;">
+            <label class="toggle-label" style="font-size:12.5px;">
+              <input type="checkbox" ${node.relay ? 'checked' : ''} ${running ? 'disabled' : ''} onchange="setRelay('${node.uuid}', this.checked)">
+              <span class="toggle-switch"></span>
+              <span>Mesh Relay Repeater</span>
+            </label>
+            <select class="form-select" style="height:32px; font-size:12px; width:110px;" ${running ? 'disabled' : ''} onchange="setType('${node.uuid}', this.value)">
+              ${(state.node_types || ['light', 'generic']).map(t => `<option value="${t}" ${t === node.type ? 'selected' : ''}>${t}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="tech-actions">
+            <button class="btn btn-sm btn-subtle" ${running ? 'disabled' : ''} onclick="runDiagnose('${node.uuid}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              Diagnose
+            </button>
+            <button class="btn btn-sm btn-subtle" ${running ? 'disabled' : ''} onclick="reconfigureNode('${node.uuid}')">
+              Reconfigure
+            </button>
+            <button class="btn btn-sm btn-danger" ${running ? 'disabled' : ''} onclick="removeNode('${node.uuid}', false)">
+              Remove
+            </button>
+            <button class="btn btn-sm btn-danger" ${running ? 'disabled' : ''} title="Force remove without contacting node" onclick="removeNode('${node.uuid}', true)">
+              Force Remove
+            </button>
+          </div>
+
+          <details class="raw-json-details">
+            <summary>Raw Telemetry & Probes JSON</summary>
+            <pre class="raw-json-box">${JSON.stringify(node.diagnostics || {}, null, 2)}</pre>
+          </details>
+        </div>
+      ` : ''}
+    `;
+
+    container.appendChild(card);
+  });
 }
 
-$("#scan").onclick = () => runAction(() => api("POST", "api/scan"));
-$("#cancel-add").onclick = () => { $("#add").hidden = true; };
-$("#copylog").onclick = async () => {
-  try { await navigator.clipboard.writeText($("#log").textContent); $("#copylog").textContent = "Copied"; }
-  catch (e) { $("#copylog").textContent = "Select the text and copy"; }
-  setTimeout(() => { $("#copylog").textContent = "Copy log"; }, 2000);
-};
+function formatTtl(probe) {
+  if (!probe || !probe.ok || probe.value == null) return "Default";
+  if (typeof probe.value === 'object') return probe.value.TTL ?? probe.value.ttl ?? JSON.stringify(probe.value);
+  return probe.value;
+}
 
-$("#add").onsubmit = async (e) => {
+function formatTransmit(probe) {
+  if (!probe || !probe.ok || !probe.value) return "Default";
+  return `${probe.value.count}x @ ${probe.value.interval}ms`;
+}
+
+function toggleTechDrawer(uuid) {
+  if (openTechDrawers.has(uuid)) openTechDrawers.delete(uuid);
+  else openTechDrawers.add(uuid);
+  if (currentState) renderDevices(currentState);
+}
+
+function startRename(uuid, currentName) {
+  renamingNodes.set(uuid, currentName);
+  if (currentState) renderDevices(currentState);
+  const inp = $(`#rename-input-${uuid}`);
+  if (inp) { inp.focus(); inp.select(); }
+}
+
+function cancelRename(uuid) {
+  renamingNodes.delete(uuid);
+  if (currentState) renderDevices(currentState);
+}
+
+async function saveRename(uuid) {
+  const inp = $(`#rename-input-${uuid}`);
+  if (!inp) return;
+  const newName = inp.value.trim();
+  if (!newName) return;
+  renamingNodes.delete(uuid);
+  await runAction(() => api("PUT", `api/nodes/${uuid}/name`, { name: newName }));
+}
+
+async function setPower(uuid, on) {
+  await runAction(() => api("POST", `api/nodes/${uuid}/power`, { on }));
+}
+
+async function setBrightness(uuid, brightness) {
+  await runAction(() => api("POST", `api/nodes/${uuid}/brightness`, { brightness: Number(brightness) }));
+}
+
+async function setColorTemp(uuid, mireds) {
+  await runAction(() => api("POST", `api/nodes/${uuid}/color-temperature`, { mireds: Number(mireds) }));
+}
+
+async function setRelay(uuid, relay) {
+  await runAction(() => api("POST", `api/nodes/${uuid}/relay`, { relay }));
+}
+
+async function setType(uuid, type) {
+  await runAction(() => api("POST", `api/nodes/${uuid}/type`, { type }));
+}
+
+async function runDiagnose(uuid) {
+  await runAction(() => api("POST", `api/nodes/${uuid}/diagnose`));
+}
+
+async function runDiagnoseAll() {
+  if (!currentState || !currentState.nodes) return;
+  for (const node of currentState.nodes) {
+    try {
+      await api("POST", `api/nodes/${node.uuid}/diagnose`);
+      break; // Gateway accepts one job at a time
+    } catch(e) {}
+  }
+}
+
+async function reconfigureNode(uuid) {
+  await runAction(() => api("POST", `api/nodes/${uuid}/configure`));
+}
+
+async function removeNode(uuid, force) {
+  const promptText = force
+    ? "Force remove this device? This forgets the device immediately. You will need to factory-reset the bulb manually."
+    : "Reset and remove this device? The node will be factory-reset over the mesh.";
+  if (!confirm(promptText)) return;
+  await runAction(() => api("DELETE", `api/nodes/${uuid}${force ? '?force=1' : ''}`));
+}
+
+// Render Mesh Topology Graph (Interactive SVG)
+function renderTopology(state) {
+  const svg = $("#topo-svg-element");
+  const nodes = state.nodes || [];
+
+  $("#topo-node-count").textContent = nodes.length;
+  $("#topo-relay-count").textContent = nodes.filter(n => n.relay).length;
+
+  let rttSum = 0, rttCount = 0;
+  nodes.forEach(n => {
+    const p = (n.diagnostics && n.diagnostics.probes) ? n.diagnostics.probes.default_ttl : null;
+    if (p && p.ok && p.rtt_ms != null) {
+      rttSum += p.rtt_ms;
+      rttCount++;
+    }
+  });
+  $("#topo-avg-rtt").textContent = rttCount ? `${Math.round(rttSum / rttCount)} ms` : "--";
+
+  const cx = 420;
+  const cy = 220;
+  const r1 = 110;
+  const r2 = 195;
+
+  let svgHtml = `
+    <defs>
+      <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="4" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    </defs>
+
+    <!-- Concentric Hop Rings -->
+    <circle cx="${cx}" cy="${cy}" r="${r1}" fill="none" stroke="var(--border-card)" stroke-dasharray="4 4" stroke-width="1.5" />
+    <circle cx="${cx}" cy="${cy}" r="${r2}" fill="none" stroke="var(--border-card)" stroke-dasharray="4 4" stroke-width="1.5" />
+
+    <!-- Ring Labels -->
+    <text x="${cx}" y="${cy - r1 + 14}" text-anchor="middle" font-size="10.5" fill="var(--text-muted)" font-weight="600">DIRECT (1 HOP)</text>
+    <text x="${cx}" y="${cy - r2 + 14}" text-anchor="middle" font-size="10.5" fill="var(--text-muted)" font-weight="600">MULTI-HOP (2+ HOPS)</text>
+  `;
+
+  // Distribute nodes radially
+  const nodeCount = nodes.length;
+  nodes.forEach((node, idx) => {
+    const diag = node.diagnostics || {};
+    const hops = diag.hops != null ? diag.hops : 1; // Default to 1 if unknown for visualization
+    const radius = hops <= 1 ? r1 : r2;
+
+    const angle = (idx / (nodeCount || 1)) * 2 * Math.PI - Math.PI / 2;
+    const nx = cx + radius * Math.cos(angle);
+    const ny = cy + radius * Math.sin(angle);
+
+    const isRelay = node.relay;
+    const isOn = node.on === true;
+    const lineColor = hops <= 1 ? "var(--ok)" : "var(--warn)";
+
+    // Link line from Gateway to Node
+    svgHtml += `
+      <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${lineColor}" stroke-width="${isRelay ? '2' : '1.5'}" stroke-opacity="0.6" stroke-dasharray="${hops > 1 ? '4 3' : 'none'}" />
+    `;
+
+    // Relay halo
+    if (isRelay) {
+      svgHtml += `
+        <circle cx="${nx}" cy="${ny}" r="22" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 3" opacity="0.8">
+          <animateTransform attributeName="transform" type="rotate" from="0 ${nx} ${ny}" to="360 ${nx} ${ny}" dur="12s" repeatCount="indefinite"/>
+        </circle>
+      `;
+    }
+
+    // Node body
+    svgHtml += `
+      <g style="cursor:pointer;" onclick="focusDevice('${node.uuid}')">
+        <circle cx="${nx}" cy="${ny}" r="16" fill="${isOn ? '#fef08a' : 'var(--bg-card)'}" stroke="${isOn ? '#ca8a04' : 'var(--border-subtle)'}" stroke-width="2" filter="${isOn ? 'url(#glow)' : 'none'}" />
+        <text x="${nx}" y="${ny + 4.5}" text-anchor="middle" font-size="12">${node.type === 'light' ? '💡' : '🎛️'}</text>
+        <text x="${nx}" y="${ny + 30}" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--text-primary)">${node.name || node.id || 'Node'}</text>
+        <text x="${nx}" y="${ny + 42}" text-anchor="middle" font-size="10" font-family="var(--font-mono)" fill="var(--text-muted)">Addr ${node.unicast}</text>
+      </g>
+    `;
+  });
+
+  // Central Gateway Node
+  svgHtml += `
+    <g>
+      <circle cx="${cx}" cy="${cy}" r="26" fill="#0284c7" filter="url(#glow)" />
+      <circle cx="${cx}" cy="${cy}" r="22" fill="#0369a1" />
+      <svg x="${cx - 11}" y="${cy - 11}" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
+        <path d="m7 7 10 10-5 5V2l5 5L7 17"></path>
+      </svg>
+      <text x="${cx}" y="${cy + 42}" text-anchor="middle" font-size="12" font-weight="800" fill="var(--text-primary)">Gateway</text>
+      <text x="${cx}" y="${cy + 54}" text-anchor="middle" font-size="10.5" font-family="var(--font-mono)" fill="var(--text-muted)">0x0001</text>
+    </g>
+  `;
+
+  svg.innerHTML = svgHtml;
+}
+
+function focusDevice(uuid) {
+  openTechDrawers.add(uuid);
+  switchTab('devices');
+  setTimeout(() => {
+    const el = $(`#node-card-${uuid}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
+
+// Pairing Wizard Handling
+function renderPairing(state) {
+  const isScanning = state.job && state.job.state === "running" && state.job.name === "scan";
+  const scanBtn = $("#scan-trigger-btn");
+  const scanText = $("#scan-btn-text");
+  const radarSpinner = $("#radar-spinner");
+  const scanStatus = $("#scan-status-text");
+
+  if (isScanning) {
+    scanBtn.disabled = true;
+    scanText.textContent = "Scanning for devices (10s)...";
+    radarSpinner.style.display = "block";
+    scanStatus.textContent = "Broadcasting discovery beacons across 2.4GHz mesh channels...";
+    $("#step-2").classList.add("active");
+  } else {
+    scanBtn.disabled = false;
+    scanText.textContent = "Start Discovery Scan (10s)";
+    radarSpinner.style.display = "none";
+    scanStatus.textContent = "Press start to scan for unprovisioned Bluetooth Mesh devices.";
+  }
+
+  const unprov = state.unprovisioned || [];
+  const container = $("#found-devices-container");
+
+  if (unprov.length > 0) {
+    container.style.display = "flex";
+    $("#step-3").classList.add("active");
+    container.innerHTML = `<h3 style="font-size:14px; font-weight:700; margin-bottom:4px;">Discovered Devices Nearby (${unprov.length})</h3>`;
+
+    unprov.forEach(uuid => {
+      const rssi = (state.scan_rssi && state.scan_rssi[uuid] != null) ? state.scan_rssi[uuid] : null;
+      let sigClass = "sig-3";
+      let sigText = "Good signal";
+      if (rssi !== null) {
+        if (rssi >= -60) { sigClass = "sig-4"; sigText = "Strong signal"; }
+        else if (rssi >= -74) { sigClass = "sig-3"; sigText = "Good signal"; }
+        else if (rssi >= -84) { sigClass = "sig-2"; sigText = "Fair signal"; }
+        else { sigClass = "sig-1"; sigText = "Weak signal"; }
+      }
+
+      const row = document.createElement("div");
+      row.className = "found-card";
+      row.innerHTML = `
+        <div class="found-left">
+          <div class="signal-bars ${sigClass}" title="${rssi ? rssi + ' dBm' : 'Signal strength'}">
+            <div class="sig-bar"></div>
+            <div class="sig-bar"></div>
+            <div class="sig-bar"></div>
+            <div class="sig-bar"></div>
+          </div>
+          <div>
+            <strong style="font-size:14px; color:var(--text-primary);">Unprovisioned Mesh Node</strong>
+            <div style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted);">${uuid}</div>
+            <div style="font-size:11px; color:var(--accent-text); font-weight:600;">${rssi ? rssi + ' dBm · ' + sigText : sigText}</div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="selectForProvision('${uuid}')">
+          Configure & Pair
+        </button>
+      `;
+      container.appendChild(row);
+    });
+  } else if (!isScanning) {
+    container.style.display = "none";
+  }
+}
+
+async function startScan() {
+  await runAction(() => api("POST", "api/scan"));
+}
+
+function selectForProvision(uuid) {
+  $("#provision-form-box").style.display = "block";
+  $("#form-prov-uuid").value = uuid;
+  $("#provision-uuid-label").textContent = `UUID: ${uuid}`;
+  $("#form-prov-name").value = "";
+  $("#form-prov-name").focus();
+  $("#provision-form-box").scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelProvision() {
+  $("#provision-form-box").style.display = "none";
+}
+
+async function submitProvision(e) {
   e.preventDefault();
   const f = e.target;
-  const submit = f.querySelector('[type="submit"]');
-  submit.disabled = true;
+  const btn = $("#btn-submit-provision");
+  btn.disabled = true;
+
   try {
-    await api("POST", "api/nodes", { uuid: f.uuid.value, name: f.name.value, type: f.type.value, relay: f.relay.checked });
-    f.hidden = true;
-    f.reset();
-    notify("");
+    await api("POST", "api/nodes", {
+      uuid: f.uuid.value,
+      name: f.name.value.trim(),
+      type: f.type.value,
+      relay: f.relay.checked,
+    });
+    $("#provision-form-box").style.display = "none";
+    switchTab('devices');
     await refresh();
-  } catch (error) { notify("Could not start pairing", error.message); }
-  finally { submit.disabled = false; }
-};
+  } catch (err) {
+    showNotice("Pairing failed to start", err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
 
-$("#mqtt").onsubmit = async (e) => {
+// Logs Console Handling
+function filterLogs() {
+  const query = $("#log-search").value.toLowerCase();
+  const consoleBox = $("#log-console");
+  const autoScroll = $("#log-autoscroll").checked;
+
+  consoleBox.innerHTML = "";
+  const filtered = currentLogs.filter(line => {
+    if (!line) return false;
+    const l = line.toLowerCase();
+    if (logFilter === 'error' && !l.includes('error') && !l.includes('fail')) return false;
+    if (logFilter === 'warn' && !l.includes('warn')) return false;
+    if (logFilter === 'info' && !l.includes('info')) return false;
+    if (query && !l.includes(query)) return false;
+    return true;
+  });
+
+  filtered.forEach(line => {
+    const div = document.createElement("div");
+    div.className = "log-line";
+    const l = line.toLowerCase();
+    if (l.includes("error") || l.includes("fail")) div.classList.add("log-error");
+    else if (l.includes("warn")) div.classList.add("log-warn");
+    else if (l.includes("info")) div.classList.add("log-info");
+    else div.classList.add("log-debug");
+
+    div.textContent = line;
+    consoleBox.appendChild(div);
+  });
+
+  if (autoScroll) {
+    consoleBox.scrollTop = consoleBox.scrollHeight;
+  }
+}
+
+function setLogFilter(level, btn) {
+  logFilter = level;
+  $$(".chip-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  filterLogs();
+}
+
+async function copyLogs() {
+  try {
+    await navigator.clipboard.writeText(currentLogs.join("\n"));
+    $("#copy-log-btn-text").textContent = "Copied!";
+    setTimeout(() => { $("#copy-log-btn-text").textContent = "Copy"; }, 2000);
+  } catch (e) {
+    showNotice("Copy Failed", "Select logs text manually to copy.");
+  }
+}
+
+// Settings & MQTT Handling
+function renderSettings(state) {
+  if (!mqttFormLoaded && state.mqtt) {
+    $("#mqtt-broker").value = state.mqtt.broker || "";
+    $("#mqtt-port").value = state.mqtt.port || 1883;
+    $("#mqtt-username").value = state.mqtt.username || "";
+    $("#mqtt-pass-status").textContent = state.mqtt.password_set ? "A password is saved." : "No password saved.";
+    mqttFormLoaded = true;
+  }
+
+  const mqStatus = $("#mqtt-settings-status");
+  if (state.mqtt && state.mqtt.connected) {
+    mqStatus.textContent = "Connected";
+    mqStatus.className = "tag ready";
+  } else {
+    mqStatus.textContent = "Disconnected";
+    mqStatus.className = "tag";
+  }
+
+  if (state.gateway) {
+    $("#gw-unicast-val").textContent = `0x${(state.gateway.address || 1).toString(16).padStart(4, '0')} (${state.gateway.address || 1})`;
+    $("#gw-iv-val").textContent = state.gateway.iv_index ?? 0;
+  }
+
+  if (!nodeTypesLoaded && state.node_types) {
+    const select = $("#form-prov-type");
+    select.innerHTML = "";
+    state.node_types.forEach(t => {
+      const opt = new Option(t, t);
+      if (t === "light") opt.selected = true;
+      select.add(opt);
+    });
+    nodeTypesLoaded = true;
+  }
+}
+
+async function saveMqtt(e) {
   e.preventDefault();
   const f = e.target;
+  const btn = $("#btn-save-mqtt");
+  btn.disabled = true;
+
   try {
-    await api("PUT", "api/mqtt", { broker: f.broker.value, port: f.port.value, username: f.username.value, password: f.password.value });
+    await api("PUT", "api/mqtt", {
+      broker: f.broker.value.trim(),
+      port: f.port.value ? Number(f.port.value) : 1883,
+      username: f.username.value.trim(),
+      password: f.password.value,
+    });
     f.password.value = "";
-    notify("");
+    showNotice("MQTT Settings Saved", "Reconnecting to broker...");
     await refresh();
-  } catch (error) { notify("Could not save MQTT settings", error.message); }
-};
+  } catch(err) {
+    showNotice("Could not save MQTT", err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
 
+// Polling and Refresh Loop
+async function refresh() {
+  if (isBusy) return;
+  isBusy = true;
+
+  try {
+    const stateRes = await fetch("api/state");
+    if (stateRes.ok) {
+      currentState = await stateRes.json();
+      renderJobAndPills(currentState);
+      renderDevices(currentState);
+      renderPairing(currentState);
+      renderSettings(currentState);
+      if (activeTab === 'topology') renderTopology(currentState);
+    }
+
+    const logRes = await fetch("api/logs");
+    if (logRes.ok) {
+      currentLogs = await logRes.json();
+      if (activeTab === 'logs') filterLogs();
+    }
+  } catch(e) {
+    // Retry next tick
+  } finally {
+    isBusy = false;
+  }
+}
+
+// Initial start
 refresh();
 setInterval(refresh, 2000);
 </script>

@@ -59,7 +59,8 @@ class GenericLightBridge(HassMqttBridge):
         message = {"state": "ON" if onoff else "OFF"}
 
         if onoff and node.supports(Light.BrightnessProperty):
-            message["brightness"] = round(node.retained(Light.BrightnessProperty, 65535) * 255 / 65535)
+            raw_b = node.retained(Light.BrightnessProperty, node.lightness_max)
+            message["brightness"] = max(1, round(node.fraction_from_lightness(raw_b) * 255))
         if onoff and node.supports(Light.TemperatureProperty):
             message["color_temp"] = round(1000000 / node.retained(Light.TemperatureProperty, 4000))
 
@@ -69,8 +70,8 @@ class GenericLightBridge(HassMqttBridge):
         if "color_temp" in payload:
             await node.set_mireds(payload["color_temp"])
         if "brightness" in payload:
-            await node.set_brightness(round(payload["brightness"] * 65535 / 255))
-        if payload.get("state") == "ON":
+            await node.set_brightness(node.lightness_from_fraction(payload["brightness"] / 255))
+        elif payload.get("state") == "ON":
             await node.turn_on()
         if payload.get("state") == "OFF":
             await node.turn_off()
