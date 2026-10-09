@@ -193,6 +193,11 @@ class ProvisionerModule(Module):
                 net_key_index=self.app.app_keys[0][1],
                 app_key=self.app.app_keys[0][2],
             )
+        except asyncio.TimeoutError as error:
+            raise RuntimeError(
+                f"No response while adding the application key to {node}. "
+                "Check that the device is powered and reachable through an enabled mesh relay."
+            ) from error
         except:
             logging.exception(f"Failed to add app key for node {node}")
 

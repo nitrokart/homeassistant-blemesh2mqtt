@@ -11,13 +11,14 @@ class Node:
     event interface for other application components.
     """
 
-    def __init__(self, uuid, type, unicast, count, configured=False, config=None):
+    def __init__(self, uuid, type, unicast, count, configured=False, config=None, composition=None):
         self.uuid = uuid
         self.type = type
         self.unicast = unicast
         self.count = count
         self.configured = configured
         self.config = config or Config(config={})
+        self.composition = composition
 
         # event system for property changes
         self._retained = {}
@@ -84,9 +85,12 @@ class Node:
 
     def yaml(self):
         # UUID is used as key and does not need to be stored
-        return {
+        data = {
             "type": self.type,
             "unicast": self.unicast,
             "count": self.count,
             "configured": self.configured,
         }
+        if self.composition is not None:
+            data["composition"] = self.composition
+        return data

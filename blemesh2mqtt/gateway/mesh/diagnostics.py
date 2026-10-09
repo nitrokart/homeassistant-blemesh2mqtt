@@ -7,6 +7,8 @@ from bluetooth_mesh.messages.config import ConfigOpcode
 
 HEARTBEAT_TTL = 127
 HEARTBEAT_WINDOW = 1.5
+LINK_PINGS = 8
+LINK_TIMEOUT = 3
 
 
 def _plain(value):
@@ -95,6 +97,7 @@ class Diagnostics:
         )
 
         await self._probe(report, "hops", self._measure_hops(client, address))
+        report["link"] = await self._measure_link(one)
 
         lightness = None
         if hasattr(node, "set_lightness_ack"):
@@ -131,6 +134,31 @@ class Diagnostics:
 
         self._results[str(node.uuid)] = report
         return report
+
+    async def _measure_link(self, one):
+        """
+        Link quality: repeat a cheap config request and report how many were
+        answered and the round trip spread. Only measured answers are counted.
+        """
+        rtts = []
+        for _ in range(LINK_PINGS):
+            started = time.monotonic()
+            try:
+                await asyncio.wait_for(
+                    one(ConfigOpcode.CONFIG_DEFAULT_TTL_GET, ConfigOpcode.CONFIG_DEFAULT_TTL_STATUS, "ttl"),
+                    LINK_TIMEOUT,
+                )
+                rtts.append(round((time.monotonic() - started) * 1000))
+            except Exception:
+                pass
+        return {
+            "sent": LINK_PINGS,
+            "received": len(rtts),
+            "loss_pct": round(100 * (LINK_PINGS - len(rtts)) / LINK_PINGS),
+            "rtt_min_ms": min(rtts) if rtts else None,
+            "rtt_avg_ms": round(sum(rtts) / len(rtts)) if rtts else None,
+            "rtt_max_ms": max(rtts) if rtts else None,
+        }
 
     async def _measure_hops(self, client, address):
         """

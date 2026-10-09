@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.38
+- Fix UI flicker: device cards, logs and topology are now updated in place and only when their content changed.
+- Topology no longer draws unmeasured nodes as a direct 1-hop link; they are shown grey with "hops not measured".
+
+## 0.1.37
+- Add a "Copy report" button to the Tech Specs raw telemetry (clean summary + JSON) and make the JSON selectable and HTML-escaped.
+
+## 0.1.36
+- Fix add-on failing to start after 0.1.33: composition data was persisted as non-YAML-safe objects. It is now stored as plain data, and an existing store written by 0.1.33 is read and cleaned automatically.
+
+## 0.1.35
+- Diagnose now measures link quality: 8 pings with loss % and min/avg/max round trip.
+- Only run btmon at `log_level: trace`; at `debug` its advertising flood pushed the application logs out of the buffer.
+
+## 0.1.34
+- Keep the "Raw Telemetry & Probes JSON" panel open across UI refreshes.
+
+## 0.1.33
+- Serialize node binding at startup, retry composition-data requests once, and persist valid composition data for recovery when a device temporarily does not respond.
+
 ## 0.1.32
 - Fix node binding crash: gracefully handle missing or incomplete composition data when a node is added or restarted.
 

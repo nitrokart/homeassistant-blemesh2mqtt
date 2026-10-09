@@ -759,9 +759,9 @@
     overflow: auto;
     margin-top: 6px;
     white-space: pre-wrap;
+    user-select: text;
+    -webkit-user-select: text;
   }
-
-  /* Topology View */
   .topo-header {
     display: flex;
     flex-wrap: wrap;
@@ -1556,6 +1556,9 @@ let currentState = null;
 let currentLogs = [];
 let activeTab = 'devices';
 let openTechDrawers = new Set();
+let openRawDetails = new Set();
+let lastLogSignature = "";
+let lastTopologyHtml = "";
 let renamingNodes = new Map();
 let logFilter = 'all';
 let isBusy = false;
@@ -1732,8 +1735,8 @@ function renderDevices(state) {
     return;
   }
 
-  container.innerHTML = "";
-  nodes.forEach(node => {
+  const seen = new Set();
+  nodes.forEach((node, index) => {
     const isLight = node.type === "light";
     const isOn = node.on === true;
     const isTechOpen = openTechDrawers.has(node.uuid);
@@ -1756,6 +1759,10 @@ function renderDevices(state) {
 
     const rttFormatted = rttVal !== null ? `${rttVal} ms` : "Not measured";
     const hopsFormatted = hopsVal !== null ? (hopsVal === 1 ? "1 Hop (Direct)" : `${hopsVal} Hops`) : "Unknown";
+    const link = diag.link || null;
+    const linkFormatted = link
+      ? (link.received ? `${link.received}/${link.sent} ok · ${link.loss_pct}% loss · ${link.rtt_min_ms}/${link.rtt_avg_ms}/${link.rtt_max_ms} ms` : `0/${link.sent} answered`)
+      : "Not measured";
 
     const safeName = escapeHtml(node.name || node.id || 'Unnamed Device');
     const safeTitle = escapeHtml(node.name || node.id || 'Unnamed');
@@ -1860,6 +1867,10 @@ function renderDevices(state) {
               <span class="metric-val">${hopsFormatted}</span>
             </div>
             <div class="metric-card">
+              <span class="metric-label">Link Quality (${link ? link.sent + ' pings' : ''})</span>
+              <span class="metric-val ${link && link.loss_pct > 25 ? 'slow' : (link && link.loss_pct > 0 ? 'normal' : 'fast')}">${linkFormatted}</span>
+            </div>
+            <div class="metric-card">
               <span class="metric-label">Default TTL</span>
               <span class="metric-val">${formatTtl(probes.default_ttl)}</span>
             </div>
@@ -1899,15 +1910,32 @@ function renderDevices(state) {
             </button>
           </div>
 
-          <details class="raw-json-details">
+          <details class="raw-json-details" ${openRawDetails.has(node.uuid) ? 'open' : ''} ontoggle="this.open ? openRawDetails.add('${node.uuid}') : openRawDetails.delete('${node.uuid}')">
             <summary>Raw Telemetry & Probes JSON</summary>
-            <pre class="raw-json-box">${JSON.stringify(node.diagnostics || {}, null, 2)}</pre>
+            <button class="btn btn-sm" onclick="copyDiagnostics('${node.uuid}', this)">Copy report</button>
+            <pre class="raw-json-box">${escapeHtml(JSON.stringify(node.diagnostics || {}, null, 2))}</pre>
           </details>
         </div>
       ` : ''}
     `;
 
-    container.appendChild(card);
+    // Reconcile in place: only touch cards whose markup changed, so nothing flickers
+    seen.add(card.id);
+    const existing = document.getElementById(card.id);
+    if (!existing) {
+      container.insertBefore(card, container.children[index] || null);
+    } else {
+      if (existing.className !== card.className || existing.innerHTML !== card.innerHTML) {
+        existing.className = card.className;
+        existing.innerHTML = card.innerHTML;
+      }
+      if (container.children[index] !== existing) {
+        container.insertBefore(existing, container.children[index] || null);
+      }
+    }
+  });
+  Array.from(container.children).forEach(el => {
+    if (!seen.has(el.id)) el.remove();
   });
 }
 
@@ -1920,6 +1948,51 @@ function formatTtl(probe) {
 function formatTransmit(probe) {
   if (!probe || !probe.ok || !probe.value) return "Default";
   return `${probe.value.count}x @ ${probe.value.interval}ms`;
+}
+
+function diagnosticsReport(node) {
+  const d = node.diagnostics || {};
+  const p = d.probes || {};
+  const l = d.link;
+  const lines = [
+    `Device: ${node.name || node.id} (addr ${d.address ?? node.unicast ?? "?"})`,
+    `Reported at: ${d.at ? new Date(d.at * 1000).toISOString() : "n/a"}`,
+    `Hops: ${d.hops ?? "unknown"}`,
+    `Default TTL RTT: ${p.default_ttl && p.default_ttl.ok ? p.default_ttl.rtt_ms + " ms" : "n/a"}`,
+    l
+      ? `Link: ${l.received}/${l.sent} answered, ${l.loss_pct}% loss, RTT min/avg/max ${l.rtt_min_ms}/${l.rtt_avg_ms}/${l.rtt_max_ms} ms`
+      : "Link: not measured",
+    "Probes:",
+    ...Object.entries(p).map(([k, v]) => `  ${k}: ${v.ok ? "ok " + v.rtt_ms + " ms" : "FAIL " + v.error}`),
+    "",
+    JSON.stringify(d, null, 2),
+  ];
+  return lines.join("\n");
+}
+
+async function copyDiagnostics(uuid, btn) {
+  const node = ((currentState && currentState.nodes) || []).find(n => n.uuid === uuid);
+  if (!node) return;
+  const text = diagnosticsReport(node);
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(text);
+    ok = true;
+  } catch (e) {
+    // clipboard API is blocked inside the Home Assistant iframe; fall back to a temporary textarea
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { ok = document.execCommand("copy"); } catch (_) {}
+    ta.remove();
+  }
+  if (btn) {
+    btn.textContent = ok ? "Copied!" : "Copy failed";
+    setTimeout(() => { btn.textContent = "Copy report"; }, 1500);
+  }
 }
 
 function toggleTechDrawer(uuid) {
@@ -2055,8 +2128,10 @@ function renderTopology(state) {
   const nodeCount = nodes.length;
   nodes.forEach((node, idx) => {
     const diag = node.diagnostics || {};
-    const hops = diag.hops != null ? diag.hops : 1; // Default to 1 if unknown for visualization
-    const radius = hops <= 1 ? r1 : r2;
+    const measured = diag.hops != null;
+    const hops = measured ? diag.hops : null;
+    // Unmeasured nodes sit between the rings with a grey link: no route is claimed
+    const radius = !measured ? (r1 + r2) / 2 : (hops <= 1 ? r1 : r2);
 
     const angle = (idx / (nodeCount || 1)) * 2 * Math.PI - Math.PI / 2;
     const nx = cx + radius * Math.cos(angle);
@@ -2064,11 +2139,11 @@ function renderTopology(state) {
 
     const isRelay = node.relay;
     const isOn = node.on === true;
-    const lineColor = hops <= 1 ? "var(--ok)" : "var(--warn)";
+    const lineColor = !measured ? "var(--text-muted)" : (hops <= 1 ? "var(--ok)" : "var(--warn)");
 
     // Link line from Gateway to Node
     svgHtml += `
-      <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${lineColor}" stroke-width="${isRelay ? '2' : '1.5'}" stroke-opacity="0.6" stroke-dasharray="${hops > 1 ? '4 3' : 'none'}" />
+      <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${lineColor}" stroke-width="${isRelay ? '2' : '1.5'}" stroke-opacity="0.6" stroke-dasharray="${!measured ? '2 4' : (hops > 1 ? '4 3' : 'none')}" />
     `;
 
     // Relay halo
@@ -2086,7 +2161,7 @@ function renderTopology(state) {
         <circle cx="${nx}" cy="${ny}" r="16" fill="${isOn ? '#fef08a' : 'var(--bg-card)'}" stroke="${isOn ? '#ca8a04' : 'var(--border-subtle)'}" stroke-width="2" filter="${isOn ? 'url(#glow)' : 'none'}" />
         <text x="${nx}" y="${ny + 4.5}" text-anchor="middle" font-size="12">${node.type === 'light' ? '💡' : '🎛️'}</text>
         <text x="${nx}" y="${ny + 30}" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--text-primary)">${escapeHtml(node.name || node.id || 'Node')}</text>
-        <text x="${nx}" y="${ny + 42}" text-anchor="middle" font-size="10" font-family="var(--font-mono)" fill="var(--text-muted)">Addr ${escapeHtml(node.unicast)}</text>
+        <text x="${nx}" y="${ny + 42}" text-anchor="middle" font-size="10" font-family="var(--font-mono)" fill="var(--text-muted)">Addr ${escapeHtml(node.unicast)}${measured ? '' : ' · hops not measured'}</text>
       </g>
     `;
   });
@@ -2104,7 +2179,10 @@ function renderTopology(state) {
     </g>
   `;
 
-  svg.innerHTML = svgHtml;
+  if (svgHtml !== lastTopologyHtml) {
+    lastTopologyHtml = svgHtml;
+    svg.innerHTML = svgHtml;
+  }
 }
 
 function focusDevice(uuid) {
@@ -2228,6 +2306,10 @@ function filterLogs() {
   const query = $("#log-search").value.toLowerCase();
   const consoleBox = $("#log-console");
   const autoScroll = $("#log-autoscroll").checked;
+
+  const signature = `${logFilter}|${query}|${currentLogs.length}|${currentLogs[currentLogs.length - 1] || ""}`;
+  if (signature === lastLogSignature) return;
+  lastLogSignature = signature;
 
   consoleBox.innerHTML = "";
   const filtered = currentLogs.filter(line => {

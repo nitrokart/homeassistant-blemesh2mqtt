@@ -17,7 +17,14 @@ class Store:
         if self._location:
             if os.path.exists(self._location):
                 with open(self._location, "r") as store_file:
-                    self._data = yaml.safe_load(store_file)
+                    content = store_file.read()
+                try:
+                    self._data = yaml.safe_load(content)
+                except yaml.constructor.ConstructorError:
+                    # 0.1.33 persisted construct containers; read our own file and let nodes sanitize them
+                    self._data = yaml.unsafe_load(content)
+                if self._data is None:
+                    self._data = {}
             else:
                 # create initial base store
                 self._data = {}

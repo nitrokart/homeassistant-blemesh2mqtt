@@ -45,7 +45,7 @@ fi
     --config=/data/meshd/config \
     --storage=/data/meshd/storage &
 
-if [ ${#MESH_DEBUG[@]} -gt 0 ] && command -v btmon >/dev/null; then
+if [ "$LOG_LEVEL" = "trace" ] && command -v btmon >/dev/null; then
     (btmon --no-pager 2>&1 | sed -u 's/^/BTMON /') &
 fi
 

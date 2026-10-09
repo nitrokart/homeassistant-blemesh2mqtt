@@ -128,6 +128,7 @@ class MqttGateway(Application):
         self._messenger_task = None
         self._job = {"name": None, "state": "idle", "message": ""}
         self._job_task = None
+        self._node_bind_lock = asyncio.Lock()
 
         self._app_keys = None
         self._dev_key = None
@@ -235,7 +236,10 @@ class MqttGateway(Application):
 
     async def _try_bind_node(self, node):
         try:
-            await node.bind(self)
+            logging.info("Waiting to bind %s; radio binding is serialized", node)
+            async with self._node_bind_lock:
+                logging.info("Starting bind for %s", node)
+                await node.bind(self)
             logging.info(f"Bound node {node}")
             node.ready.set()
         except:

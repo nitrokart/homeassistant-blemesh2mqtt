@@ -20,6 +20,19 @@ The light may have left pairing mode or may not have received the provisioning r
 
 Set the add-on option `io` to `generic`. Ensure the Home Assistant Bluetooth integration is not using the onboard adapter. The `auto` backend may fail with the onboard controller.
 
+## Lights stay on "Starting" after an add-on restart
+
+Node model discovery uses Bluetooth Mesh configuration messages. The gateway now binds nodes one at a time, retries composition discovery once, and reuses a previously received composition if the node does not answer. Check the gateway log for `Requesting composition`, `Received composition`, or `Using cached composition` entries. If a node has no cached composition and both radio attempts fail, move it closer to the gateway or a known working relay and restart the add-on.
+
+## Reconfigure gets no response from a device
+
+If reconfiguration times out while adding the application key or fetching composition data, the gateway is not receiving a response from that node. Bluetooth Mesh uses managed flooding rather than a fixed route, so an intermediate light only helps if its Mesh Relay feature is enabled and it can hear and retransmit traffic along the path.
+
+- In the **Devices** tab, verify **Mesh Relay** is enabled for the intermediate light. Check its **Tech Specs** diagnostics for a successful relay probe.
+- Keep both lights powered, and check the topology diagnostics for a reachable multi-hop path. A relay cannot help if the radio link to either side is unreliable.
+- Reconfigure the intermediate light first if you just enabled its relay setting, then retry the unreachable device.
+- A relay setting on the unreachable device itself cannot restore the route to that device; it must first receive the configuration message.
+
 ## Light is missing from Home Assistant
 
 - Check that the MQTT broker is running and the Home Assistant MQTT integration is configured.
