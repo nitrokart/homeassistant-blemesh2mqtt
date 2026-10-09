@@ -41,9 +41,10 @@ class Element:
 
 class Composition:
     def __init__(self, data):
-        self._data = data
+        self._data = data or {}
 
-        self._elements = list(map(Element, data.get("elements")))
+        elements = data.get("elements") if isinstance(data, dict) else None
+        self._elements = list(map(Element, elements)) if elements else []
 
     def __str__(self):
         return str(self._data)
@@ -53,4 +54,4 @@ class Composition:
         return self._elements
 
     def element(self, index):
-        return self._elements[index]
+        return self._elements[index] if index < len(self._elements) else None

@@ -41,8 +41,9 @@ class Generic(Node):
         client = self._app.elements[0][models.ConfigClient]
         data = await client.get_composition_data([self.unicast], net_index=0, timeout=30)
         # TODO: multi page composition data support
-        page_zero = data.get(self.unicast, {}).get("zero")
-        self._composition = Composition(page_zero)
+        node_data = data.get(self.unicast) if isinstance(data, dict) else None
+        page_zero = node_data.get("zero") if isinstance(node_data, dict) else None
+        self._composition = Composition(page_zero) if page_zero else None
 
     async def bind(self, app):
         await super().bind(app)
@@ -67,7 +68,7 @@ class Generic(Node):
             return False
 
         element = self._composition.element(0)
-        if not element.supports(model):
+        if not element or not element.supports(model):
             logging.info(f"{self} does not support {model}")
             return False
 

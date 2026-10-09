@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.32
+- Fix node binding crash: gracefully handle missing or incomplete composition data when a node is added or restarted.
+
 ## 0.1.31
 - Robust provisioning: automatically retry up to 3 times on RF timeouts, bad-pdu, and busy responses when adding new mesh devices.
 
