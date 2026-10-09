@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.31
+- Robust provisioning: automatically retry up to 3 times on RF timeouts, bad-pdu, and busy responses when adding new mesh devices.
+
 ## 0.1.30
 - UI optimization: debounce brightness and color-temperature slider inputs (250ms) to avoid queue saturation during rapid dragging.
 

@@ -170,11 +170,12 @@ class ProvisionerModule(Module):
             await self.provisioning_done.wait()
             if not self.provisioning_error:
                 return
-            # meshd reports bad-pdu when the link open went unanswered; retry
-            if "bad-pdu" not in self.provisioning_error or attempt == attempts:
+            # meshd reports bad-pdu or timeout when link packets drop over RF; retry
+            is_retriable = any(err in self.provisioning_error for err in ("bad-pdu", "timeout", "busy"))
+            if not is_retriable or attempt == attempts:
                 break
-            logging.warning(f"Provisioning attempt {attempt} failed ({self.provisioning_error}), retrying...")
-            await asyncio.sleep(2.0)
+            logging.warning(f"Provisioning attempt {attempt} failed ({self.provisioning_error}), retrying in 3s...")
+            await asyncio.sleep(3.0)
 
         raise RuntimeError(f"Provisioning failed: {self.provisioning_error}")
 
