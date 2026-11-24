@@ -29,7 +29,7 @@ class NodeManager:
         typename = info.get("type")
 
         # check if the user changed the node type in the configuration
-        # this needs to be done here, before the actual node class is instanciated
+        # this needs to be done here, before the actual node class is instantiated
         if node_config:
             user_typename = node_config.optional("type", typename)
             if user_typename != typename:
@@ -52,7 +52,7 @@ class NodeManager:
 
     def persist(self):
         # TODO: maybe update store instead of recreating it
-        # this is currently neccessary to reflect deletions
+        # this is currently necessary to reflect deletions
         self._store.reset()
 
         for node in self._nodes.values():

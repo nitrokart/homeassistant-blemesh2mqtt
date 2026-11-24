@@ -121,7 +121,7 @@ class Generic(Node):
         """
         Bind the given model to the application key
 
-        If the node supports the given model, it is bound to the appliaction key
+        If the node supports the given model, it is bound to the application key
         and listed within the supported models.
 
         If the node does not support the given model, the request is skipped.

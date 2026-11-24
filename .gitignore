@@ -1,5 +1,8 @@
-.venv/
-__pycache__/
+.venv
+__pycache__
+
+.vscode
+.history
 
 # local runtime files of the gateway (not the add-on manifest)
 blemesh2mqtt/gateway/config.yaml
