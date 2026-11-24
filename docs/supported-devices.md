@@ -4,12 +4,13 @@
 
 This add-on supports **Bluetooth Mesh lights**, not every device that uses Bluetooth. The light must be provisionable onto a Bluetooth Mesh network and expose compatible Bluetooth Mesh SIG lighting server models.
 
-| Device or model | Status | Expected controls |
-| --- | --- | --- |
-| Ledvance E27 Bluetooth Mesh bulb | Reported tested by this project; exact model/SKU was not recorded | Light controls available in the bulb's advertised capabilities |
-| Bluetooth Mesh light with a Generic OnOff Server | Compatible at the model level; specific products have not been verified here | On/off |
-| Bluetooth Mesh light with a Light Lightness Server | Compatible at the model level; specific products have not been verified here | On/off and brightness |
-| Bluetooth Mesh light with a Light CTL Server | Compatible at the model level; specific products have not been verified here | Brightness and color temperature; on/off requires Generic OnOff support |
+| Device or model                                                                                                                | Status                                                                       | Expected controls                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Ledvance E27 Bluetooth Mesh bulb                                                                                               | Reported tested by this project; exact model/SKU was not recorded            | Light controls available in the bulb's advertised capabilities          |
+| Bluetooth Mesh light with a Generic OnOff Server                                                                               | Compatible at the model level; specific products have not been verified here | On/off                                                                  |
+| Bluetooth Mesh light with a Light Lightness Server                                                                             | Compatible at the model level; specific products have not been verified here | On/off and brightness                                                   |
+| Bluetooth Mesh light with a Light CTL Server                                                                                   | Compatible at the model level; specific products have not been verified here | Brightness and color temperature; on/off requires Generic OnOff support |
+| [Sengled Bluetooth Mesh Plug B1C-NB7](https://www.amazon.com/Sengled-Bluetooth-Schedule-Certified-Required/dp/B093F4K57G?th=1) | Tested                                                                       | On/off (no energy monitoring)                                           |
 
 There is not yet a verified, SKU-by-SKU compatibility list. Do not assume that every product from a listed manufacturer works: product generations and regional variants can use different radios, mesh protocols, or model sets.
 
