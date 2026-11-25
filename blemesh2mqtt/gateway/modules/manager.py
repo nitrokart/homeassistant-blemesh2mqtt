@@ -10,7 +10,7 @@ from . import Module
 
 class ManagerModule(Module):
     """
-    Node managment functionality
+    Node management functionality
     """
 
     def __init__(self, *args, **kwargs):

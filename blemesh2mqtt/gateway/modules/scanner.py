@@ -46,7 +46,7 @@ class ScannerModule(Module):
         """
         The method is called from the bluetooth-meshd daemon when a
         unique UUID has been seen during UnprovisionedScan() for
-        unprovsioned devices.
+        unprovisioned devices.
         """
 
         try:

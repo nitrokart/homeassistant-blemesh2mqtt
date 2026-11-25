@@ -8,10 +8,11 @@ from contextlib import AsyncExitStack
 from mesh import Node
 from tools import Tasks
 
-from .bridges import light
+from .bridges import light, switch
 
 BRIDGES = {
     "light": light.GenericLightBridge,
+    "switch": switch.GenericSwitchBridge,
 }
 
 

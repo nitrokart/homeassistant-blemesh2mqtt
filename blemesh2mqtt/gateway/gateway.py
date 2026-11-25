@@ -26,6 +26,7 @@ from modules.scanner import ScannerModule
 from modules.manager import ManagerModule
 
 from mesh.nodes.light import Light
+from mesh.nodes.switch import Switch
 
 LOG_BUFFER = LogBuffer()
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "info").upper(), handlers=[logging.StreamHandler(), LOG_BUFFER])
@@ -44,6 +45,7 @@ MESH_MODULES = {
 NODE_TYPES = {
     "generic": Node,
     "light": Light,
+    "switch": Switch,
 }
 
 
@@ -439,11 +441,12 @@ class MqttGateway(Application):
     def ui_state(self):
         nodes = []
         for node in self._nodes.all():
+            supports_onoff = isinstance(node, (Light, Switch)) and node.supports(Switch.OnOffProperty)
             supports_brightness = isinstance(node, Light) and node.supports(Light.BrightnessProperty)
             supports_temperature = isinstance(node, Light) and node.supports(Light.TemperatureProperty)
             brightness = node.retained(Light.BrightnessProperty, None) if supports_brightness else None
             temperature = node.retained(Light.TemperatureProperty, None) if supports_temperature else None
-            onoff = node.retained(Light.OnOffProperty, None) if isinstance(node, Light) else None
+            onoff = node.retained(Switch.OnOffProperty, None) if supports_onoff else None
             nodes.append(
                 {
                     "uuid": str(node.uuid),
@@ -454,7 +457,7 @@ class MqttGateway(Application):
                     "unicast": node.unicast,
                     "configured": node.configured,
                     "ready": node.ready.is_set(),
-                    "supports_onoff": isinstance(node, Light) and node.supports(Light.OnOffProperty),
+                    "supports_onoff": supports_onoff,
                     "supports_brightness": supports_brightness,
                     "supports_temperature": supports_temperature,
                     "brightness": (

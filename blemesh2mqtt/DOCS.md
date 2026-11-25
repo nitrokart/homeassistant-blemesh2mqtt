@@ -16,20 +16,21 @@ The first installation builds BlueZ and can take 10–20 minutes on a Raspberry 
 
 ## Device compatibility
 
-| Device or model | Status |
-| --- | --- |
-| Ledvance E27 Bluetooth Mesh bulb | Reported tested; exact model/SKU is not recorded |
-| Bluetooth Mesh SIG Generic OnOff, Light Lightness, or Light CTL lights | Model-level compatibility; individual products are not verified |
+| Device or model                                                                                                                | Status                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| Ledvance E27 Bluetooth Mesh bulb                                                                                               | Reported tested; exact model/SKU is not recorded                |
+| Bluetooth Mesh SIG Generic OnOff, Light Lightness, or Light CTL lights                                                         | Model-level compatibility; individual products are not verified |
+| [Sengled Bluetooth Mesh Plug B1C-NB7](https://www.amazon.com/Sengled-Bluetooth-Schedule-Certified-Required/dp/B093F4K57G?th=1) | Tested                                                          |
 
 BLE-only, Zigbee, Wi-Fi, and vendor-specific mesh devices are not supported. RGB/color control is not implemented. Check the [full supported-device guide](https://github.com/nitrokart/homeassistant-blemesh2mqtt/blob/master/docs/supported-devices.md) before buying hardware.
 
 ## Add-on options
 
-| Option | Default | Description |
-| --- | --- | --- |
-| `adapter` | `0` | Bluetooth adapter index (`hciN`). |
-| `io` | `auto` | Mesh I/O backend: `auto`, `generic`, or `mgmt`. Use `generic` for Raspberry Pi 4 onboard Bluetooth. |
-| `log_level` | `info` | Log verbosity. `debug` enables detailed Bluetooth traces. |
+| Option      | Default | Description                                                                                         |
+| ----------- | ------- | --------------------------------------------------------------------------------------------------- |
+| `adapter`   | `0`     | Bluetooth adapter index (`hciN`).                                                                   |
+| `io`        | `auto`  | Mesh I/O backend: `auto`, `generic`, or `mgmt`. Use `generic` for Raspberry Pi 4 onboard Bluetooth. |
+| `log_level` | `info`  | Log verbosity. `debug` enables detailed Bluetooth traces.                                           |
 
 ## Full documentation
 

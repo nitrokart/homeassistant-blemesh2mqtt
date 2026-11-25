@@ -11,7 +11,7 @@ class HassMqttBridge:
     device type and a specific type of Bluetooth Mesh node.
 
     This class provides default implementations, that should work for most common nodes.
-    They can however be overriden, if more sophisticated behaviour is required.
+    They can however be overridden, if more sophisticated behavior is required.
     """
 
     def __init__(self, messenger):
